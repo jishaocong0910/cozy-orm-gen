@@ -348,7 +348,7 @@ func (t columnType) match(columnType string) bool {
 // VARCHAR2(1 BYTE)
 // character varying(255)
 func parseColumnType(ct string) columnType {
-	subs := dataTypeRegex.FindStringSubmatch(ct)
+	subs := columnTypeRegex.FindStringSubmatch(ct)
 	var dataType, param1, param2 string
 	if len(subs) > 1 {
 		dataType = strings.ToLower(subs[1])
@@ -411,7 +411,7 @@ var fieldNameMapper = orm.NewNameMapper().UpperCamelCase()
 var entityNameMapper = orm.NewNameMapper().UpperCamelCase()
 var entityFileNameMapper = orm.NewNameMapper().LowerSnakeCase().AddSuffix(".go")
 var pkgNameRegex = regexp.MustCompile(`^([a-zA-Z_](?:\w*[a-zA-Z_])*)(\d*)$`)
-var dataTypeRegex = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)
+var columnTypeRegex = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)
 var logger = func() struct {
 	info  func(msg string, args ...any)
 	error func(msg string, args ...any)
