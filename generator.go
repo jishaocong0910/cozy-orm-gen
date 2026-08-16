@@ -347,6 +347,7 @@ func (t columnType) match(columnType string) bool {
 // TIMESTAMP(6) WITH TIME ZONE
 // VARCHAR2(1 BYTE)
 // character varying(255)
+// varchar(20)[][]
 func parseColumnType(ct string) columnType {
 	subs := columnTypeRegex.FindStringSubmatch(ct)
 	var dataType, param1, param2 string

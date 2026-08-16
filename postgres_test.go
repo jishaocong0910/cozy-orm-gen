@@ -76,7 +76,7 @@ func TestPostgres(t *testing.T) {
 		Bigserial:             new(int64(1)),
 		Bigint:                new(int64(1)),
 		BigintArr:             new("{1,2,3}"),
-		Bit:                   new("10110"),
+		Bit:                   []byte{'1', '0', '1', '1', '0'},
 		BitVarying:            new("10110"),
 		Boolean:               new(true),
 		Box:                   new("(4,3),(0,0)"),

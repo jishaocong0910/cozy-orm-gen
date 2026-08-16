@@ -17,7 +17,7 @@ type TbDemo struct {
 	// bigint[]
 	BigintArr *string `orm:"column=bigint_arr"`
 	// bit(5)
-	Bit *string `orm:"column=bit"`
+	Bit []byte `orm:"column=bit"`
 	// bit varying(255)
 	BitVarying *string `orm:"column=bit_varying"`
 	// boolean

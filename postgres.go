@@ -19,6 +19,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -43,6 +44,7 @@ func (di postgresInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 	i.character_maximum_length,
 	i.numeric_precision,
 	i.numeric_scale,
+	i.datetime_precision,
 	i.is_identity,
 	i.is_nullable = 'NO',
 	i.column_default,
@@ -107,20 +109,21 @@ order by
 		isAutoIncrement := false
 
 		var (
-			column                 string
-			udtName                string
-			columnType             string
-			characterMaximumLength *int
-			numericPrecision       *int
-			numericScale           *int
-			isIdentity             string
-			isNotNull              bool
-			columnDefault          *string
-			isPk                   bool
-			attndims               int
-			description            *string
+			column            string
+			udtName           string
+			columnType        string
+			charLength        *int
+			precision         *int
+			scale             *int
+			datetimePrecision *int
+			isIdentity        string
+			isNotNull         bool
+			columnDefault     *string
+			isPk              bool
+			attndims          int
+			description       *string
 		)
-		err := rows.Scan(&column, &udtName, &columnType, &characterMaximumLength, &numericPrecision, &numericScale, &isIdentity, &isNotNull, &columnDefault, &isPk, &attndims, &description)
+		err := rows.Scan(&column, &udtName, &columnType, &charLength, &precision, &scale, &datetimePrecision, &isIdentity, &isNotNull, &columnDefault, &isPk, &attndims, &description)
 		if err != nil { // coverage-ignore
 			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -147,23 +150,87 @@ order by
 			fieldType = "*string"
 		} else {
 			switch udtName {
-			case "int8":
-				fieldType = "*int64"
-			case "int4":
-				fieldType = "*int32"
 			case "int2":
 				fieldType = "*int16"
-			case "time", "timetz", "date", "timestamp", "timestamptz":
-				fieldType = "*time.Time"
-			case "float8", "numeric":
+				if isAutoIncrement {
+					columnType = "smallserial|serial2"
+				} else {
+					columnType += "|smallint"
+				}
+			case "int4":
+				fieldType = "*int32"
+				if isAutoIncrement {
+					columnType = "serial|serial4"
+				} else {
+					columnType += "|int|integer"
+				}
+			case "int8":
+				fieldType = "*int64"
+				if isAutoIncrement {
+					columnType = "bigserial|serial8"
+				} else {
+					columnType += "|bigint"
+				}
+			case "numeric":
 				fieldType = "*float64"
+				if precision != nil {
+					columnType += "(" + strconv.Itoa(*precision)
+					if scale != nil {
+						columnType += "," + strconv.Itoa(*scale)
+					}
+					columnType += ")"
+				}
+				columnType += "|" + strings.ReplaceAll(columnType, "numeric", "decimal")
+			case "float8":
+				fieldType = "*float64"
+				columnType += "|float|double|double precision"
 			case "float4":
 				fieldType = "*float32"
+				columnType += "|real"
 			case "bool":
 				fieldType = "*bool"
+				columnType += "|boolean"
 			case "bytea":
 				fieldType = "[]byte"
-			case "bit", "varbit", "box", "bpchar", "varchar", "cidr", "circle", "inet", "interval", "json", "jsonb", "line",
+			case "bpchar":
+				fieldType = "*string"
+				columnType = "char(" + strconv.Itoa(*charLength) + ")"
+				columnType += "|" + strings.ReplaceAll(columnType, "char", "character")
+			case "varchar":
+				fieldType = "*string"
+				if charLength != nil {
+					columnType += "(" + strconv.Itoa(*charLength) + ")"
+				}
+				columnType += "|" + strings.ReplaceAll(columnType, "varchar", "character varying")
+			case "time":
+				fieldType = "*time.Time"
+				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+			case "timestamp":
+				fieldType = "*time.Time"
+				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+			case "timetz":
+				fieldType = "*time.Time"
+				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+				columnType += "|time(" + strconv.Itoa(*datetimePrecision) + ") with time zone"
+			case "timestamptz":
+				fieldType = "*time.Time"
+				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+				columnType += "|timestamp(" + strconv.Itoa(*datetimePrecision) + ") with time zone"
+			case "date":
+				fieldType = "*time.Time"
+			case "varbit":
+				fieldType = "*string"
+				if charLength != nil {
+					columnType = "(" + strconv.Itoa(*charLength) + ")"
+				}
+				columnType += "|" + strings.ReplaceAll(columnType, "varbit", "bit varying")
+			case "bit":
+				fieldType = "[]byte"
+				columnType = "(" + strconv.Itoa(*charLength) + ")"
+			case "interval":
+				fieldType = "*string"
+				columnType = "(" + strconv.Itoa(*datetimePrecision) + ")"
+			case "box", "cidr", "circle", "inet", "json", "jsonb", "line",
 				"lseg", "macaddr", "macaddr8", "money", "path", "pg_lsn", "pg_snapshot", "point", "polygon", "text",
 				"tsquery", "tsvector", "txid_snapshot", "uuid", "xml":
 				fieldType = "*string"
