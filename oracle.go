@@ -98,7 +98,7 @@ ORDER BY
 		}
 
 		switch dataType {
-		case "CHAR", "VARCHAR2":
+		case "CHAR":
 			fieldType = "*string"
 			columnType += "(" + strconv.Itoa(charLength)
 			if *charUseByte {
@@ -107,20 +107,33 @@ ORDER BY
 				columnType += " CHAR"
 			}
 			columnType += ")"
-
-			if dataType == "CHAR" {
-				columnType += "|" + strings.ReplaceAll(columnType, "CHAR", "CHARACTER")
-			} else if dataType == "VARCHAR2" {
-				columnType += "|" + strings.ReplaceAll(columnType, "VARCHAR2", "VARCHAR") +
-					"|" + strings.ReplaceAll(columnType, "VARCHAR2", "CHARACTER VARYING") +
-					"|" + strings.ReplaceAll(columnType, "VARCHAR2", "CHAR VARYING")
+			columnType += "|" + strings.ReplaceAll(columnType, "CHAR", "CHARACTER")
+		case "VARCHAR2":
+			fieldType = "*string"
+			columnType += "(" + strconv.Itoa(charLength)
+			if *charUseByte {
+				columnType += " BYTE"
+			} else {
+				columnType += " CHAR"
 			}
-		case "NCHAR", "NVARCHAR2":
+			columnType += ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "VARCHAR2", "VARCHAR") +
+				"|" + strings.ReplaceAll(columnType, "VARCHAR2", "CHARACTER VARYING") +
+				"|" + strings.ReplaceAll(columnType, "VARCHAR2", "CHAR VARYING")
+		case "NCHAR":
 			fieldType = "*string"
 			columnType += "(" + strconv.Itoa(charLength) + ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "NCHAR", "NATIONAL CHARACTER") +
+				"|" + strings.ReplaceAll(columnType, "NCHAR", "NATIONAL CHAR")
+		case "NVARCHAR2":
+			fieldType = "*string"
+			columnType += "(" + strconv.Itoa(charLength) + ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "NVARCHAR2", "NATIONAL CHARACTER VARYING") +
+				"|" + strings.ReplaceAll(columnType, "NVARCHAR2", "NATIONAL CHAR VARYING")
 		case "ROWID", "UROWID", "CLOB", "NCLOB":
 			fieldType = "*string"
 		case "NUMBER":
+			isNumber := true
 			if scale != nil {
 				if *scale == 0 {
 					if precision != nil {
@@ -131,21 +144,26 @@ ORDER BY
 						}
 					} else {
 						fieldType = "*int64"
-						columnType = "|INT|INTEGER|SMALLINT"
+						columnType = "INT|INTEGER|SMALLINT"
+						isNumber = false
 					}
 				} else {
 					fieldType = "*float64"
 				}
-				columnType += "("
-				if precision != nil {
-					columnType += strconv.Itoa(*precision)
+				if isNumber {
+					columnType += "("
+					if precision != nil {
+						columnType += strconv.Itoa(*precision)
+					}
+					columnType += "," + strconv.Itoa(*scale)
+					columnType += ")"
 				}
-				columnType += "," + strconv.Itoa(*scale)
-				columnType += ")"
 			}
-			columnType += "|" + strings.ReplaceAll(columnType, "NUMBER", "NUMERIC") +
-				"|" + strings.ReplaceAll(columnType, "NUMBER", "DECIMAL") +
-				"|" + strings.ReplaceAll(columnType, "NUMBER", "DEC")
+			if isNumber {
+				columnType += "|" + strings.ReplaceAll(columnType, "NUMBER", "NUMERIC") +
+					"|" + strings.ReplaceAll(columnType, "NUMBER", "DECIMAL") +
+					"|" + strings.ReplaceAll(columnType, "NUMBER", "DEC")
+			}
 		case "FLOAT":
 			fieldType = "*float64"
 			columnType += "(" + strconv.Itoa(*precision) + ")"
