@@ -38,66 +38,42 @@ func (di postgresInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 	)
 
 	rows, err := di.db.Query(`select
-	i.column_name,
-	i.udt_name,
-	i.udt_name,
-	i.character_maximum_length,
-	i.numeric_precision,
-	i.numeric_scale,
-	i.datetime_precision,
-	i.is_identity,
-	i.is_nullable = 'NO',
-	i.column_default,
-	pk.is_pk is not null,
-	p.attndims,
-	p.description
+	a.attname,
+	t.typname,
+	format_type(a.atttypid, a.atttypmod),
+	a.attndims,
+	a.atttypmod,
+	i.indisprimary is not null,
+	a.attidentity = 'd',
+	a.attnotnull,
+	pg_get_expr(d.adbin, d.adrelid),
+	col_description(a.attrelid, a.attnum)
 from
-	information_schema.columns i
-left join (
-	select
-		tc.table_schema,
-		tc.table_name,
-		kcu.column_name,
-		true is_pk
-	from
-		information_schema.table_constraints tc
-	join information_schema.key_column_usage kcu 
-        on
-		tc.constraint_name = kcu.constraint_name
-		and tc.table_schema = kcu.table_schema
-	where
-		tc.constraint_type = 'PRIMARY KEY'
-) pk on
-	i.table_schema = pk.table_schema
-	and i.table_name = pk.table_name
-	and i.column_name = pk.column_name
-join (
-	select
-		n.nspname,
-		c.relname,
-		a.attname,
-		a.attndims,
-		d.description
-	from
-		pg_namespace n
-	join pg_class c on
-		n.oid = c.relnamespace
-	join pg_attribute a on
-		a.attrelid = c.oid
-	left join pg_description d on
-		d.objoid = c.oid
-		and d.objsubid = a.attnum
-	where
-		a.attnum > 0
-		and not a.attisdropped) p on
-	p.nspname = i.table_schema
-	and p.relname = i.table_name
-	and p.attname = i.column_name
+	pg_attribute a
+join 
+    pg_class c on
+	a.attrelid = c.oid
+join 
+    pg_namespace n on
+	c.relnamespace = n.oid
+join 
+    pg_type t on
+	a.atttypid = t.oid
+left join 
+    pg_attrdef d on
+	d.adrelid = a.attrelid
+	and d.adnum = a.attnum
+left join 
+    pg_index i on
+	a.attrelid = i.indrelid
+	and a.attnum = any(i.indkey)
 where
-	 i.table_schema = $1
-	and i.table_name = $2
+	n.nspname = $1
+	and c.relname = $2
+	and a.attnum > 0
+	and not a.attisdropped
 order by
-	i.ordinal_position`, di.schema, table)
+	a.attnum;`, di.schema, table)
 	if err != nil { // coverage-ignore
 		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
@@ -109,21 +85,18 @@ order by
 		isAutoIncrement := false
 
 		var (
-			column            string
-			udtName           string
-			columnType        string
-			charLength        *int
-			precision         *int
-			scale             *int
-			datetimePrecision *int
-			isIdentity        string
-			isNotNull         bool
-			columnDefault     *string
-			isPk              bool
-			attndims          int
-			description       *string
+			column        string
+			typname       string
+			columnType    string
+			attndims      int
+			atttypmod     int
+			isPk          bool
+			isIdentity    bool
+			isNotNull     bool
+			columnDefault *string
+			description   *string
 		)
-		err := rows.Scan(&column, &udtName, &columnType, &charLength, &precision, &scale, &datetimePrecision, &isIdentity, &isNotNull, &columnDefault, &isPk, &attndims, &description)
+		err := rows.Scan(&column, &typname, &columnType, &attndims, &atttypmod, &isPk, &isIdentity, &isNotNull, &columnDefault, &description)
 		if err != nil { // coverage-ignore
 			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -131,7 +104,7 @@ order by
 			description = new("")
 		}
 
-		if strings.EqualFold(isIdentity, "YES") {
+		if isIdentity {
 			isAutoIncrement = true
 		}
 		if columnDefault != nil {
@@ -142,94 +115,95 @@ order by
 			}
 		}
 
-		if udtName[:1] == "_" {
-			udtName = udtName[1:]
+		if typname[:1] == "_" {
+			typname = typname[1:]
 		}
 
 		if attndims > 0 {
 			fieldType = "*string"
 		} else {
-			switch udtName {
+			switch typname {
 			case "int2":
 				fieldType = "*int16"
 				if isAutoIncrement {
 					columnType = "smallserial|serial2"
 				} else {
-					columnType += "|smallint"
+					columnType += "|int2"
 				}
 			case "int4":
 				fieldType = "*int32"
 				if isAutoIncrement {
 					columnType = "serial|serial4"
 				} else {
-					columnType += "|int|integer"
+					columnType += "|int|int4"
 				}
 			case "int8":
 				fieldType = "*int64"
 				if isAutoIncrement {
 					columnType = "bigserial|serial8"
 				} else {
-					columnType += "|bigint"
+					columnType += "|int8"
 				}
 			case "numeric":
 				fieldType = "*float64"
-				if precision != nil {
-					columnType += "(" + strconv.Itoa(*precision)
-					if scale != nil {
-						columnType += "," + strconv.Itoa(*scale)
-					}
-					columnType += ")"
-				}
 				columnType += "|" + strings.ReplaceAll(columnType, "numeric", "decimal")
 			case "float8":
 				fieldType = "*float64"
-				columnType += "|float|double|double precision"
+				columnType += "|float|float8"
 			case "float4":
 				fieldType = "*float32"
-				columnType += "|real"
+				columnType += "|float4"
 			case "bool":
 				fieldType = "*bool"
-				columnType += "|boolean"
+				columnType += "|bool"
 			case "bytea":
 				fieldType = "[]byte"
 			case "bpchar":
 				fieldType = "*string"
-				columnType = "char(" + strconv.Itoa(*charLength) + ")"
-				columnType += "|" + strings.ReplaceAll(columnType, "char", "character")
+				columnType += "|" + strings.ReplaceAll(columnType, "character", "char")
 			case "varchar":
 				fieldType = "*string"
-				if charLength != nil {
-					columnType += "(" + strconv.Itoa(*charLength) + ")"
-				}
-				columnType += "|" + strings.ReplaceAll(columnType, "varchar", "character varying")
+				columnType += "|" + strings.ReplaceAll(columnType, "character varying", "varchar")
 			case "time":
 				fieldType = "*time.Time"
-				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+				if atttypmod == -1 {
+					columnType = "time(6)|time(6) without time zone"
+				} else {
+					columnType += "|time(" + strconv.Itoa(atttypmod) + ")"
+				}
 			case "timestamp":
 				fieldType = "*time.Time"
-				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
+				if atttypmod == -1 {
+					columnType = "timestamp(6)|timestamp(6) without time zone"
+				} else {
+					columnType += "|timestamp(" + strconv.Itoa(atttypmod) + ")"
+				}
 			case "timetz":
 				fieldType = "*time.Time"
-				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
-				columnType += "|time(" + strconv.Itoa(*datetimePrecision) + ") with time zone"
+				if atttypmod == -1 {
+					columnType = "timetz(6)|time(6) with time zone"
+				} else {
+					columnType += "|timetz(" + strconv.Itoa(atttypmod) + ")"
+				}
 			case "timestamptz":
 				fieldType = "*time.Time"
-				columnType += "(" + strconv.Itoa(*datetimePrecision) + ")"
-				columnType += "|timestamp(" + strconv.Itoa(*datetimePrecision) + ") with time zone"
+				if atttypmod == -1 {
+					columnType = "timestamptz(6)|timestamp(6) with time zone"
+				} else {
+					columnType += "|timestamptz(" + strconv.Itoa(atttypmod) + ")"
+				}
+			case "interval":
+				fieldType = "*string"
+				if atttypmod == -1 {
+					columnType += "(6)"
+				}
 			case "date":
 				fieldType = "*time.Time"
 			case "varbit":
 				fieldType = "*string"
-				if charLength != nil {
-					columnType = "(" + strconv.Itoa(*charLength) + ")"
-				}
-				columnType += "|" + strings.ReplaceAll(columnType, "varbit", "bit varying")
+				columnType += "|" + strings.ReplaceAll(columnType, "bit varying", "varbit")
 			case "bit":
 				fieldType = "[]byte"
-				columnType = "(" + strconv.Itoa(*charLength) + ")"
-			case "interval":
-				fieldType = "*string"
-				columnType = "(" + strconv.Itoa(*datetimePrecision) + ")"
 			case "box", "cidr", "circle", "inet", "json", "jsonb", "line",
 				"lseg", "macaddr", "macaddr8", "money", "path", "pg_lsn", "pg_snapshot", "point", "polygon", "text",
 				"tsquery", "tsvector", "txid_snapshot", "uuid", "xml":
@@ -239,6 +213,7 @@ order by
 
 		f := fieldTmplParam{
 			Column:          column,
+			ColumnType:      columnType,
 			FieldName:       fieldNameMapper.Convert(column),
 			FieldType:       fieldType,
 			IsPk:            isPk,
