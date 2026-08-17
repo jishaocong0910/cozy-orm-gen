@@ -37,35 +37,53 @@ func (di sqlServerDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, 
 	)
 
 	rows, err := di.db.Query(`SELECT
-  B.name,
-  C.increment_value,
-  D.data_type,
-  CASE              D.is_nullable
-    WHEN 'NO' THEN 1
-    ELSE 0
-  END AS is_notnull,
-  CASE
-    WHEN D.column_default IS NOT NULL THEN 1
-    ELSE 0
-  END AS has_default,
-  CASE 
-    WHEN PK.index_id IS NOT NULL THEN 1 
-    ELSE 0 
-  END AS is_primary_key,
-  E.value AS comment
+	c.name column_name,
+	t.name data_type,
+	c.precision,
+	c.scale,
+	c.max_length char_length,
+	1 - c.is_nullable not_null,
+	CASE 
+		WHEN c.default_object_id > 0 THEN 1 
+		ELSE 0 
+	END has_default,
+	CASE
+		WHEN i.is_primary_key = 1 THEN 1
+		ELSE 0
+	END is_pk,
+	idc.increment_value,
+	ep.value comment
 FROM
-  sys.tables A
-  LEFT JOIN sys.columns B ON A.object_id = B.object_id
-  LEFT JOIN sys.identity_columns C ON A.object_id = C.object_id
-  AND B.name = C.name
-  LEFT JOIN information_schema.columns D ON B.name = D.column_name AND D.table_name = A.name
-  LEFT JOIN sys.extended_properties E ON B.object_id = E.major_id AND B.column_id = E.minor_id AND E.name = 'MS_Description'
-  LEFT JOIN sys.indexes I ON A.object_id = I.object_id AND I.is_primary_key = 1
-  LEFT JOIN sys.index_columns PK ON I.object_id = PK.object_id AND I.index_id = PK.index_id AND B.column_id = PK.column_id
+	sys.tables tb
+INNER JOIN 
+    sys.columns c ON
+	tb.object_id = c.object_id
+INNER JOIN 
+    sys.types t ON
+	c.user_type_id = t.user_type_id
+LEFT JOIN 
+    sys.identity_columns idc ON
+	idc.object_id = c.object_id
+	AND idc.column_id = c.column_id
+LEFT JOIN 
+    sys.index_columns ic ON
+	ic.object_id = c.object_id
+	AND ic.column_id = c.column_id
+LEFT JOIN 
+    sys.indexes i ON
+	i.object_id = ic.object_id
+	AND i.index_id = ic.index_id
+	AND i.is_primary_key = 1
+LEFT JOIN 
+    sys.extended_properties ep ON
+	ep.major_id = c.object_id
+	AND ep.minor_id = c.column_id
+	AND ep.name = 'MS_Description'
 WHERE
-  A.name = :1
-  AND SCHEMA_NAME(A.schema_id) = :2
-ORDER BY B.column_id`, table, di.schema)
+	tb.name = :1
+	AND SCHEMA_NAME(tb.schema_id) = :2
+ORDER BY
+	c.column_id`, table, di.schema)
 	if err != nil { // coverage-ignore
 		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
@@ -76,14 +94,17 @@ ORDER BY B.column_id`, table, di.schema)
 
 		var (
 			column         string
-			incrementValue *int
 			dataType       string
+			precision      int
+			scale          int
+			charLength     int
 			isNotNull      bool
 			isHasDefault   bool
 			isPk           bool
+			incrementValue *int
 			comment        *string
 		)
-		err := rows.Scan(&column, &incrementValue, &dataType, &isNotNull, &isHasDefault, &isPk, &comment)
+		err := rows.Scan(&column, &dataType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
 			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
