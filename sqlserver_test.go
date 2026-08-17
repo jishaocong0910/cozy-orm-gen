@@ -32,13 +32,12 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// 由于容器镜像只支持Intel芯片，此用例只能在Intel芯片执行
 func TestSqlServer(t *testing.T) {
 	r := require.New(t)
 	ctx := context.Background()
 
 	mssqlContainer, err := mssql.Run(ctx,
-		"mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04",
+		"mcr.microsoft.com/azure-sql-edge:latest",
 		mssql.WithAcceptEULA(),
 		mssql.WithPassword("SuperStrong@PassWord"),
 		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("Recovery is complete.").WithStartupTimeout(time.Minute*5)),
@@ -51,6 +50,7 @@ func TestSqlServer(t *testing.T) {
 	}()
 
 	dsn, err := mssqlContainer.ConnectionString(ctx)
+	dsn += "encrypt=true&TrustServerCertificate=true"
 	r.NoError(err)
 	db, err := sql.Open("mssql", dsn)
 	r.NoError(err)
@@ -67,10 +67,10 @@ func TestSqlServer(t *testing.T) {
 	}
 
 	gen.Config{
-		DbType:   orm.DbType_.SQLServer,
-		Dsn:      dsn,
-		FilePath: "testdata/sqlserver/gen/entity",
-		Tables:   []string{"tb_demo"},
+		DriverType: gen.DriverType_.SQLServer,
+		Dsn:        dsn,
+		FilePath:   "testdata/sqlserver/gen/entity",
+		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {

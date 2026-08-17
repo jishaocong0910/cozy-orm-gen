@@ -58,10 +58,10 @@ func TestPostgres(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DbType:   orm.DbType_.Postgres,
-		Dsn:      dsn,
-		FilePath: "testdata/postgres/gen/entity",
-		Tables:   []string{"tb_demo"},
+		DriverType: gen.DriverType_.Postgres,
+		Dsn:        dsn,
+		FilePath:   "testdata/postgres/gen/entity",
+		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {

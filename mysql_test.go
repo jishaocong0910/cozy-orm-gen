@@ -62,7 +62,7 @@ func TestMySql(t *testing.T) {
 	dsn += "?parseTime=true&loc=Local"
 
 	gen.Config{
-		DbType:      orm.DbType_.MySQL,
+		DriverType:  gen.DriverType_.MySQL,
 		Dsn:         dsn,
 		FilePath:    "testdata/mysql/gen/entity",
 		CoverFile:   true,
@@ -167,11 +167,11 @@ func TestMySql2(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DbType:    orm.DbType_.MySQL,
-		Dsn:       dsn,
-		FilePath:  "testdata/mysql/gen/entity",
-		CoverFile: true,
-		Tables:    []string{"tb_demo2"},
+		DriverType: gen.DriverType_.MySQL,
+		Dsn:        dsn,
+		FilePath:   "testdata/mysql/gen/entity",
+		CoverFile:  true,
+		Tables:     []string{"tb_demo2"},
 		Mappings: gen.Mapping[*pkg.MyData]("int").
 			Mapping[pkg2.MyData1]("DECIMAL(6)").
 			Mapping[pkg3.MyData2]("decimal(#)").

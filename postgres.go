@@ -73,7 +73,7 @@ where
 	and a.attnum > 0
 	and not a.attisdropped
 order by
-	a.attnum;`, di.schema, table)
+	a.attnum`, di.schema, table)
 	if err != nil { // coverage-ignore
 		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
@@ -104,19 +104,18 @@ order by
 			description = new("")
 		}
 
+		if typname[:1] == "_" {
+			typname = typname[1:]
+		}
+
 		if isIdentity {
 			isAutoIncrement = true
-		}
-		if columnDefault != nil {
+		} else if columnDefault != nil {
 			if strings.HasPrefix(*columnDefault, "nextval(") {
 				isAutoIncrement = true
 			} else {
 				isHasDefault = true
 			}
-		}
-
-		if typname[:1] == "_" {
-			typname = typname[1:]
 		}
 
 		if attndims > 0 {
