@@ -225,13 +225,13 @@ ORDER BY
 
 func newSqlServerDbInfo(dsn string) sqlServerDbInfo {
 	db, err := sql.Open("mssql", dsn)
-	if err != nil {
+	if err != nil { // coverage-ignore
 		panic(err)
 	}
 	di := sqlServerDbInfo{db: db}
 	if di.db != nil {
 		rows, err := di.db.Query("SELECT SCHEMA_NAME()")
-		if err != nil {
+		if err != nil { // coverage-ignore
 			panic(err)
 		}
 		if rows.Next() {

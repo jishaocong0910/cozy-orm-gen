@@ -43,19 +43,22 @@ type TbDemo struct {
 	// char(10)
 	Char *string `orm:"column=char"`
 	// varchar(10)
-	Varchar *string `orm:"column=varchar"`
+	Varchar    *string `orm:"column=varchar"`
+	VarcharMax *string `orm:"column=varchar_max"`
 	// text
 	Text *string `orm:"column=text"`
 	// nchar(10)
 	Nchar *string `orm:"column=nchar"`
 	// nvarchar(10)
-	Nvarchar *string `orm:"column=nvarchar"`
+	Nvarchar    *string `orm:"column=nvarchar"`
+	NvarcharMax *string `orm:"column=nvarchar_max"`
 	// ntext
 	Ntext *string `orm:"column=ntext"`
 	// binary(10)
 	Binary []byte `orm:"column=binary"`
 	// varbinary(10)
-	Varbinary []byte `orm:"column=varbinary"`
+	Varbinary    []byte `orm:"column=varbinary"`
+	VarbinaryMax []byte `orm:"column=varbinary_max"`
 	// image
 	Image []byte `orm:"column=image"`
 	// geography
@@ -67,5 +70,6 @@ type TbDemo struct {
 	// uniqueidentifier
 	Uniqueidentifier []byte `orm:"column=uniqueidentifier"`
 	// xml
-	Xml *string `orm:"column=xml"`
+	Xml        *string `orm:"column=xml"`
+	Rowversion []byte  `orm:"column=rowversion"`
 }

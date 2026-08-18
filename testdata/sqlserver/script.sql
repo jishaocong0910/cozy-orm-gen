@@ -19,18 +19,22 @@ CREATE TABLE tb_demo
     smalldatetime    smalldatetime,
     char             char(10),
     varchar          varchar(10),
+    varchar_max      varchar(max),
     text             text,
     nchar            nchar(10),
     nvarchar         nvarchar(10),
+    nvarchar_max     nvarchar(max),
     ntext            ntext,
     binary           binary(10),
     varbinary        varbinary(10),
+    varbinary_max    varbinary(max),
     image            image,
     geography        geography,
     geometry         geometry,
     hierarchyid      hierarchyid,
     uniqueidentifier uniqueidentifier,
-    xml              xml
+    xml              xml,
+    rowversion       rowversion
 );
 
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'table comment', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo';

@@ -255,9 +255,9 @@ func (g *generator) determinePkgName(pkgPath, pkgName string, pkgNameToPaths map
 func (g *generator) genEntity() {
 	for _, e := range g.entityTmplParams {
 		err := g.createFile(g.outPath, entityFileNameMapper.Convert(e.EntityName), g.coverFile, entityTmpl, e)
-		if err == nil { // coverage-ignore
+		if err == nil {
 			logger.info("create entity of table \"%s\" success", e.Table)
-		} else {
+		} else { // coverage-ignore
 			logger.error("create entity of table \"%s\" fail, error: %+v", e.Table, err)
 		}
 	}
@@ -426,7 +426,7 @@ var (
 			info: func(msg string, args ...any) {
 				out.Printf("INFO "+msg+"\n", args...)
 			},
-			error: func(msg string, args ...any) {
+			error: func(msg string, args ...any) { // coverage-ignore
 				out.Printf("ERROR "+msg+"\n", args...)
 			},
 		}

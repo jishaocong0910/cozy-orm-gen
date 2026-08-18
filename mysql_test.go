@@ -26,12 +26,6 @@ import (
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
 	"github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/entity"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg"
-	pkg2 "github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg/pkg"
-	pkg3 "github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg/pkg2"
-	pkg_2 "github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg/pkg3"
-	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg/pkg4"
-	pkg4 "github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/pkg/pkg5"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
@@ -64,7 +58,6 @@ func TestMySql(t *testing.T) {
 	gen.Config{
 		DriverType:  gen.DriverType_.MySQL,
 		Dsn:         dsn,
-		FilePath:    "testdata/mysql/gen/entity",
 		CoverFile:   true,
 		OmitNameTag: true,
 		Tables:      []string{"tb_demo"},
@@ -72,10 +65,10 @@ func TestMySql(t *testing.T) {
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/mysql/gen")
+		os.RemoveAll("entity")
 	})
 
-	gen.CompareFile(r, "testdata/mysql/entity/tb_demo.go", "testdata/mysql/gen/entity/tb_demo.go")
+	gen.CompareFile(r, "testdata/mysql/entity/tb_demo.go", "entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
@@ -142,49 +135,4 @@ func TestMySql(t *testing.T) {
 	j1 := gen.ToJson(e)
 	j2 := gen.ToJson(e2)
 	r.Equal(j1, j2)
-}
-
-func TestCustomType(t *testing.T) {
-	r := require.New(t)
-	ctx := context.Background()
-
-	mysqlContainer, err := mysql.RunContainer(ctx,
-		testcontainers.WithImage("mysql:8.0.36"),
-		mysql.WithDatabase("test"),
-		mysql.WithUsername("root"),
-		mysql.WithPassword("12345678"),
-		mysql.WithScripts("testdata/mysql/script2.sql"),
-		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("port: 3306  MySQL Community Server").WithStartupTimeout(time.Minute*5)),
-	)
-	r.NoError(err)
-	defer func() {
-		if err := mysqlContainer.Terminate(ctx); err != nil {
-			log.Fatalf("failed to terminate container: %s", err)
-		}
-	}()
-
-	dsn, err := mysqlContainer.ConnectionString(ctx)
-	r.NoError(err)
-
-	gen.Config{
-		DriverType: gen.DriverType_.MySQL,
-		Dsn:        dsn,
-		FilePath:   "testdata/mysql/gen/entity",
-		CoverFile:  true,
-		Tables:     []string{"tb_demo2"},
-		Mappings: gen.Mapping[*pkg.MyData]("int").
-			Mapping[pkg2.MyData1]("DECIMAL(6)").
-			Mapping[pkg3.MyData2]("decimal(#)").
-			Mapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) ").
-			Mapping[*pkg_3.MyData4]("decimal(#,2)").
-			Mapping[*string]("decimal(20,2)").
-			Mapping[pkg_3.MyData4]("decimal(10 #)").
-			Mapping[pkg4.MyData5]("decimal"),
-	}.Gen()
-
-	t.Cleanup(func() {
-		os.RemoveAll("testdata/mysql/gen")
-	})
-
-	gen.CompareFile(r, "testdata/mysql/entity/tb_demo2.go", "testdata/mysql/gen/entity/tb_demo2.go")
 }

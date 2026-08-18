@@ -118,6 +118,7 @@ func TestSqlServer(t *testing.T) {
 	r.NotNil(e2.Datetime)
 	r.NotNil(e2.Smalldatetime)
 	r.NotNil(e2.Binary)
+	r.NotNil(e2.Rowversion)
 	e2.Date = nil
 	e2.Time = nil
 	e2.Datetime2 = nil
@@ -125,6 +126,7 @@ func TestSqlServer(t *testing.T) {
 	e2.Datetime = nil
 	e2.Smalldatetime = nil
 	e2.Binary = nil
+	e2.Rowversion = nil
 	e.Char = new("sqlserver ")
 	e.Nchar = new("sqlserver ")
 	e.Date = nil

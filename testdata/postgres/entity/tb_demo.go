@@ -78,13 +78,17 @@ type TbDemo struct {
 	// text
 	Text *string `orm:"column=text"`
 	// time
-	Time *time.Time `orm:"column=time"`
+	Time  *time.Time `orm:"column=time"`
+	Time2 *time.Time `orm:"column=time2"`
 	// time with time zone
-	TimeWithTimeZone *time.Time `orm:"column=time_with_time_zone"`
+	TimeWithTimeZone  *time.Time `orm:"column=time_with_time_zone"`
+	TimeWithTimeZone2 *time.Time `orm:"column=time_with_time_zone2"`
 	// timestamp
-	Timestamp *time.Time `orm:"column=timestamp"`
+	Timestamp  *time.Time `orm:"column=timestamp"`
+	Timestamp2 *time.Time `orm:"column=timestamp2"`
 	// timestamp with time zone
-	TimestampWithTimeZone *time.Time `orm:"column=timestamp_with_time_zone"`
+	TimestampWithTimeZone  *time.Time `orm:"column=timestamp_with_time_zone"`
+	TimestampWithTimeZone2 *time.Time `orm:"column=timestamp_with_time_zone2"`
 	// tsquery
 	Tsquery *string `orm:"column=tsquery"`
 	// tsvector

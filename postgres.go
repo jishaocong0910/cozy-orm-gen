@@ -255,7 +255,7 @@ where
 
 func newPostgresDbInfo(dsn string) postgresInfo {
 	db, err := sql.Open("postgres", dsn)
-	if err != nil {
+	if err != nil { // coverage-ignore
 		panic(err)
 	}
 	di := postgresInfo{db: db}

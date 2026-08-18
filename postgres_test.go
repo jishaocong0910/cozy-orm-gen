@@ -25,7 +25,12 @@ import (
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
 	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/entity"
-
+	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg"
+	pkg2 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg"
+	pkg3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg2"
+	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg3"
+	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg4"
+	pkg4 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg5"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -142,4 +147,71 @@ func TestPostgres(t *testing.T) {
 	j1 := gen.ToJson(e)
 	j2 := gen.ToJson(e2)
 	r.Equal(j1, j2)
+}
+
+func TestCustomType(t *testing.T) {
+	r := require.New(t)
+	ctx := context.Background()
+
+	postgresContainer, err := postgres.RunContainer(ctx,
+		testcontainers.WithImage("docker.io/postgres:16-alpine"),
+		postgres.WithDatabase("postgres"),
+		postgres.WithUsername("postgres"),
+		postgres.WithPassword("12345678"),
+		postgres.WithInitScripts("testdata/postgres/script2.sql"),
+		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("database system is ready to accept connections").WithStartupTimeout(time.Minute*5)),
+	)
+	r.NoError(err)
+
+	defer func() {
+		if err := postgresContainer.Terminate(ctx); err != nil {
+			log.Fatalf("failed to terminate container: %s", err)
+		}
+	}()
+
+	time.Sleep(time.Second * 5)
+
+	dsn, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
+	r.NoError(err)
+
+	r.PanicsWithValue(`invalid field type "complex128"`, func() {
+		gen.Config{
+			DriverType: gen.DriverType_.Postgres,
+			Dsn:        dsn,
+			FilePath:   "testdata/postgres/gen/entity",
+			Mappings:   gen.Mapping[complex128]("int"),
+		}.Gen()
+	})
+
+	r.PanicsWithValue(`invalid field type "*complex128"`, func() {
+		gen.Config{
+			DriverType: gen.DriverType_.Postgres,
+			Dsn:        dsn,
+			FilePath:   "testdata/postgres/gen/entity",
+			Mappings:   gen.Mapping[*complex128]("int"),
+		}.Gen()
+	})
+
+	gen.Config{
+		DriverType: gen.DriverType_.Postgres,
+		Dsn:        dsn,
+		FilePath:   "testdata/postgres/gen/entity",
+		Tables:     []string{"tb_demo2"},
+		Mappings: gen.Mapping[*pkg.MyData]("int").
+			Mapping[pkg2.MyData1]("DECIMAL(6)").
+			Mapping[pkg3.MyData2]("numeric(#)").
+			Mapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) ").
+			Mapping[*pkg_3.MyData4]("decimal(#,2)").
+			Mapping[*string]("decimal(20,2)").
+			Mapping[pkg_3.MyData4]("numeric(10 #)").
+			Mapping[pkg4.MyData5]("numeric").
+			Mapping[int64]("double precision").
+			Mapping[string]("time(6) with time zone"),
+	}.Gen()
+
+	t.Cleanup(func() {
+		os.RemoveAll("testdata/postgres/gen")
+	})
+
+	gen.CompareFile(r, "testdata/postgres/entity/tb_demo2.go", "testdata/postgres/gen/entity/tb_demo2.go")
 }

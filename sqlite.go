@@ -124,7 +124,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 
 func newSqliteDbInfo(dsn string) sqliteDbInfo {
 	db, err := sql.Open("sqlite", dsn)
-	if err != nil {
+	if err != nil { // coverage-ignore
 		panic(err)
 	}
 	return sqliteDbInfo{db: db}

@@ -46,6 +46,7 @@ type TbDemo struct {
 	Number3 *float64 `orm:"column=number_3"`
 	// FLOAT
 	Float *float64 `orm:"column=float"`
+	Real  *float64 `orm:"column=real"`
 	// BINARY_FLOAT
 	BinaryFloat *float32 `orm:"column=binary_float"`
 	// BINARY_DOUBLE
