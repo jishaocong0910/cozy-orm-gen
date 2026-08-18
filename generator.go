@@ -399,34 +399,36 @@ type fieldTmplParam struct {
 //go:linkname isValidFieldType github.com/jishaocong0910/cozy-orm/orm.isValidFieldType
 func isValidFieldType(reflect.Type) bool
 
-//go:embed entity.tmpl
-var entityTmplEmbed string
-var entityTmpl = func() *template.Template {
-	t, err := template.New("").Parse(entityTmplEmbed)
-	if err != nil { // coverage-ignore
-		panic(err)
-	}
-	return t
-}()
-var fieldNameMapper = orm.NewNameMapper().UpperCamelCase()
-var entityNameMapper = orm.NewNameMapper().UpperCamelCase()
-var entityFileNameMapper = orm.NewNameMapper().LowerSnakeCase().AddSuffix(".go")
-var pkgNameRegex = regexp.MustCompile(`^([a-zA-Z_](?:\w*[a-zA-Z_])*)(\d*)$`)
-var columnTypeRegex = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)
-var logger = func() struct {
-	info  func(msg string, args ...any)
-	error func(msg string, args ...any)
-} {
-	out := log.New(os.Stdout, "", log.LstdFlags)
-	return struct {
+var (
+	//go:embed entity.tmpl
+	entityTmplEmbed string
+	entityTmpl      = func() *template.Template {
+		t, err := template.New("").Parse(entityTmplEmbed)
+		if err != nil { // coverage-ignore
+			panic(err)
+		}
+		return t
+	}()
+	fieldNameMapper      = orm.NewNameMapper().UpperCamelCase()
+	entityNameMapper     = orm.NewNameMapper().UpperCamelCase()
+	entityFileNameMapper = orm.NewNameMapper().LowerSnakeCase().AddSuffix(".go")
+	pkgNameRegex         = regexp.MustCompile(`^([a-zA-Z_](?:\w*[a-zA-Z_])*)(\d*)$`)
+	columnTypeRegex      = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)
+	logger               = func() struct {
 		info  func(msg string, args ...any)
 		error func(msg string, args ...any)
-	}{
-		info: func(msg string, args ...any) {
-			out.Printf("INFO "+msg+"\n", args...)
-		},
-		error: func(msg string, args ...any) {
-			out.Printf("ERROR "+msg+"\n", args...)
-		},
-	}
-}()
+	} {
+		out := log.New(os.Stdout, "", log.LstdFlags)
+		return struct {
+			info  func(msg string, args ...any)
+			error func(msg string, args ...any)
+		}{
+			info: func(msg string, args ...any) {
+				out.Printf("INFO "+msg+"\n", args...)
+			},
+			error: func(msg string, args ...any) {
+				out.Printf("ERROR "+msg+"\n", args...)
+			},
+		}
+	}()
+)

@@ -19,6 +19,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	_ "github.com/microsoft/go-mssqldb"
@@ -39,9 +40,10 @@ func (di sqlServerDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, 
 	rows, err := di.db.Query(`SELECT
 	c.name column_name,
 	t.name data_type,
+	t.name data_type,
 	c.precision,
 	c.scale,
-	c.max_length char_length,
+    COLUMNPROPERTY(c.object_id, c.name, 'precision') char_length,
 	1 - c.is_nullable not_null,
 	CASE 
 		WHEN c.default_object_id > 0 THEN 1 
@@ -95,6 +97,7 @@ ORDER BY
 		var (
 			column         string
 			dataType       string
+			columnType     string
 			precision      int
 			scale          int
 			charLength     int
@@ -104,7 +107,7 @@ ORDER BY
 			incrementValue *int
 			comment        *string
 		)
-		err := rows.Scan(&column, &dataType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &incrementValue, &comment)
+		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
 			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -117,30 +120,79 @@ ORDER BY
 		}
 
 		switch dataType {
+		case "int":
+			fieldType = "*int32"
+			columnType += "|integer"
 		case "tinyint":
 			fieldType = "*uint"
 		case "smallint":
 			fieldType = "*int16"
-		case "int":
-			fieldType = "*int32"
 		case "bigint":
 			fieldType = "*int64"
 		case "bit":
 			fieldType = "*bool"
-		case "decimal", "numeric", "money", "smallmoney", "float":
+		case "decimal":
+			fieldType = "*float64"
+			columnType += "(" + strconv.Itoa(precision) + "," + strconv.Itoa(scale) + ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "decimal", "numeric")
+		case "numeric":
+			fieldType = "*float64"
+			columnType += "|" + strings.ReplaceAll(columnType, "numeric", "decimal")
+		case "float":
+			fieldType = "*float64"
+			columnType += "|double precision"
+		case "money", "smallmoney":
 			fieldType = "*float64"
 		case "real":
 			fieldType = "*float32"
 		case "date", "time", "datetime2", "datetimeoffset", "datetime", "smalldatetime":
 			fieldType = "*time.Time"
-		case "char", "varchar", "text", "nchar", "nvarchar", "ntext", "xml", "json":
+		case "varchar":
 			fieldType = "*string"
-		case "binary", "varbinary", "image", "geography", "geometry", "hierarchyid", "uniqueidentifier":
+			if charLength == -1 {
+				columnType += "(max)"
+			} else {
+				columnType += "(" + strconv.Itoa(charLength) + ")"
+			}
+			columnType += "|" + strings.ReplaceAll(columnType, "varchar", "character varying")
+		case "char":
+			fieldType = "*string"
+			columnType += "(" + strconv.Itoa(charLength) + ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "char", "character")
+		case "nchar":
+			fieldType = "*string"
+			columnType += "(" + strconv.Itoa(charLength) + ")"
+			columnType += "|" + strings.ReplaceAll(columnType, "nchar", "national character") +
+				"|" + strings.ReplaceAll(columnType, "nchar", "national char")
+		case "nvarchar":
+			fieldType = "*string"
+			if charLength == -1 {
+				columnType += "(max)"
+			} else {
+				columnType += "(" + strconv.Itoa(charLength) + ")"
+			}
+			columnType += "|" + strings.ReplaceAll(columnType, "nvarchar", "national character varying") +
+				"|" + strings.ReplaceAll(columnType, "nvarchar", "national char varying")
+		case "text", "ntext", "xml", "json":
+			fieldType = "*string"
+		case "timestamp":
+			fieldType = "[]byte"
+			columnType += "|rowversion"
+		case "varbinary":
+			fieldType = "[]byte"
+			if charLength == -1 {
+				columnType += "(max)"
+			} else {
+				columnType += "(" + strconv.Itoa(charLength) + ")"
+			}
+			columnType += "|" + strings.ReplaceAll(columnType, "varbinary", "binary varying")
+		case "binary", "image", "geography", "geometry", "hierarchyid", "uniqueidentifier":
 			fieldType = "[]byte"
 		}
 
 		f := fieldTmplParam{
 			Column:            column,
+			ColumnType:        columnType,
 			FieldName:         fieldNameMapper.Convert(column),
 			FieldType:         fieldType,
 			IsPk:              isPk,

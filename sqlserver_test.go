@@ -49,8 +49,7 @@ func TestSqlServer(t *testing.T) {
 		}
 	}()
 
-	dsn, err := mssqlContainer.ConnectionString(ctx)
-	dsn += "database=master&encrypt=disable"
+	dsn, err := mssqlContainer.ConnectionString(ctx, "encrypt=disable")
 	r.NoError(err)
 	db, err := sql.Open("mssql", dsn)
 	r.NoError(err)
