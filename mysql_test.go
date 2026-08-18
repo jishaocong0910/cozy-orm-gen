@@ -144,7 +144,7 @@ func TestMySql(t *testing.T) {
 	r.Equal(j1, j2)
 }
 
-func TestMySql2(t *testing.T) {
+func TestCustomType(t *testing.T) {
 	r := require.New(t)
 	ctx := context.Background()
 
