@@ -62,7 +62,7 @@ func (c Config) build() *generator {
 		coverFile:   c.CoverFile,
 		omitNameTag: c.OmitNameTag,
 		table_:      c.Tables,
-		ignoreM_:    c.Ignores,
+		ignoreMap:   c.Ignores,
 		dbInfo:      di,
 		customType_: cts,
 	}
@@ -127,7 +127,7 @@ type generator struct {
 	coverFile        bool
 	omitNameTag      bool
 	table_           []string
-	ignoreM_         map[string][]string
+	ignoreMap        map[string][]string
 	dbInfo           dbInfo
 	customType_      []customType
 	entityTmplParam_ []entityTmplParam
@@ -165,7 +165,7 @@ func (g *generator) prepareTmplParams() {
 }
 
 func (g *generator) ignoreField(table string, field_ []fieldTmplParam) []fieldTmplParam {
-	column_ := g.ignoreM_[table]
+	column_ := g.ignoreMap[table]
 	if column_ != nil {
 		var f_ []fieldTmplParam
 		for _, f := range field_ {
