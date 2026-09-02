@@ -19,9 +19,9 @@ limitations under the License.
 
 package entity
 
-{{- if gt (len .Imports) 0}}
+{{- if gt (len .Import_) 0}}
 import (
-    {{- range $i := .Imports}}
+    {{- range $i := .Import_}}
     {{$i}}
     {{- end}}
 )
@@ -34,7 +34,7 @@ type {{.EntityName}} struct {
 {{- if not .OmitNameTag}}
     _ struct{} `orm:"table={{.Table}}"`
 {{- end}}
-{{- range .Fields}}
+{{- range .Field_}}
 	{{- $hasOrmTag := false -}}
 	{{- if ne .Comment ""}}
 	// {{.Comment}}

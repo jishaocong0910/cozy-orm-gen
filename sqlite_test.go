@@ -62,8 +62,8 @@ func TestSqlite(t *testing.T) {
     boolean boolean, -- boolean[]
     date date, -- date
     datetime datetime, -- datetime
-    text text, -- text
     string string, -- string
+    text text, -- text
     character character, -- character
     varchar varchar, -- varchar
     varying_character varying character, -- varying character
@@ -79,12 +79,15 @@ func TestSqlite(t *testing.T) {
 		DriverType: gen.DriverType_.SQLite,
 		Dsn:        dsn,
 		FilePath:   "testdata/sqlite/gen/entity",
-		Tables:     []string{"tb_demo"},
+		Table_:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
-		//os.RemoveAll("testdata/sqlite/gen")
+		os.RemoveAll("testdata/sqlite/gen")
 	})
+
+	gen.CompareFile(r, "testdata/sqlite/entity/tb_demo.go", "testdata/sqlite/gen/entity/tb_demo.go")
+
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
 		Int:              new(int32(1)),

@@ -66,7 +66,7 @@ func TestPostgres(t *testing.T) {
 		DriverType: gen.DriverType_.Postgres,
 		Dsn:        dsn,
 		FilePath:   "testdata/postgres/gen/entity",
-		Tables:     []string{"tb_demo"},
+		Table_:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
@@ -179,7 +179,7 @@ func TestCustomType(t *testing.T) {
 			DriverType: gen.DriverType_.Postgres,
 			Dsn:        dsn,
 			FilePath:   "testdata/postgres/gen/entity",
-			Mappings:   gen.Mapping[complex128]("int"),
+			Mapping_:   gen.Mapping[complex128]("int"),
 		}.Gen()
 	})
 
@@ -188,7 +188,7 @@ func TestCustomType(t *testing.T) {
 			DriverType: gen.DriverType_.Postgres,
 			Dsn:        dsn,
 			FilePath:   "testdata/postgres/gen/entity",
-			Mappings:   gen.Mapping[*complex128]("int"),
+			Mapping_:   gen.Mapping[*complex128]("int"),
 		}.Gen()
 	})
 
@@ -196,8 +196,8 @@ func TestCustomType(t *testing.T) {
 		DriverType: gen.DriverType_.Postgres,
 		Dsn:        dsn,
 		FilePath:   "testdata/postgres/gen/entity",
-		Tables:     []string{"tb_demo2"},
-		Mappings: gen.Mapping[*pkg.MyData]("int").
+		Table_:     []string{"tb_demo2"},
+		Mapping_: gen.Mapping[*pkg.MyData]("int").
 			Mapping[pkg2.MyData1]("DECIMAL(6)").
 			Mapping[pkg3.MyData2]("numeric(#)").
 			Mapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) ").

@@ -60,8 +60,8 @@ func TestMySql(t *testing.T) {
 		Dsn:         dsn,
 		CoverFile:   true,
 		OmitNameTag: true,
-		Tables:      []string{"tb_demo"},
-		Ignores:     map[string][]string{"tb_demo": {"unused"}},
+		Table_:      []string{"tb_demo"},
+		Ignore_:     map[string][]string{"tb_demo": {"unused"}},
 	}.Gen()
 
 	t.Cleanup(func() {

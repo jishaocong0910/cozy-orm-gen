@@ -14,7 +14,7 @@ type TbDemo struct {
 	Bigint           *int64     `orm:"column=bigint"`
 	UnsignedBigInt   *uint64    `orm:"column=unsigned_big_int"`
 	Int2             *int16     `orm:"column=int2"`
-	Int4             *int16     `orm:"column=int4"`
+	Int4             *int32     `orm:"column=int4"`
 	Int8             *int8      `orm:"column=int8"`
 	Real             *float64   `orm:"column=real"`
 	Numeric          *float64   `orm:"column=numeric"`
