@@ -79,7 +79,7 @@ func TestSqlite(t *testing.T) {
 		DriverType: gen.DriverType_.SQLite,
 		Dsn:        dsn,
 		FilePath:   "testdata/sqlite/gen/entity",
-		Table_:     []string{"tb_demo"},
+		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {

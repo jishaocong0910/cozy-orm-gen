@@ -72,7 +72,7 @@ func TestOracle(t *testing.T) {
 		DriverType: gen.DriverType_.Oracle,
 		Dsn:        dsn,
 		FilePath:   "testdata/oracle/gen/entity",
-		Table_:     []string{"tb_demo"},
+		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {

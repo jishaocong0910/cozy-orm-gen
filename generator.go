@@ -43,9 +43,9 @@ type Config struct {
 	FilePath    string
 	CoverFile   bool
 	OmitNameTag bool
-	Table_      []string
-	Ignore_     map[string][]string
-	Mapping_    customType_
+	Tables      []string
+	Ignores     map[string][]string
+	Mappings    customType_
 }
 
 func (c Config) Gen() {
@@ -61,8 +61,8 @@ func (c Config) build() *generator {
 		outPath:     path,
 		coverFile:   c.CoverFile,
 		omitNameTag: c.OmitNameTag,
-		table_:      c.Table_,
-		ignore:      c.Ignore_,
+		table_:      c.Tables,
+		ignoreM_:    c.Ignores,
 		dbInfo:      di,
 		customType_: cts,
 	}
@@ -85,8 +85,8 @@ func (c Config) getOutPath() string {
 }
 
 func (c Config) getCustomTypes() []customType {
-	cts := make([]customType, 0, len(c.Mapping_))
-	for _, m := range c.Mapping_ {
+	cts := make([]customType, 0, len(c.Mappings))
+	for _, m := range c.Mappings {
 		switch m.ft.Kind() {
 		case reflect.Pointer, reflect.Slice, reflect.Map:
 			if !isValidFieldType(m.ft) { // coverage-ignore
@@ -127,7 +127,7 @@ type generator struct {
 	coverFile        bool
 	omitNameTag      bool
 	table_           []string
-	ignore           map[string][]string
+	ignoreM_         map[string][]string
 	dbInfo           dbInfo
 	customType_      []customType
 	entityTmplParam_ []entityTmplParam
@@ -165,12 +165,12 @@ func (g *generator) prepareTmplParams() {
 }
 
 func (g *generator) ignoreField(table string, field_ []fieldTmplParam) []fieldTmplParam {
-	ignoreColumn_ := g.ignore[table]
-	if ignoreColumn_ != nil {
+	column_ := g.ignoreM_[table]
+	if column_ != nil {
 		var f_ []fieldTmplParam
 		for _, f := range field_ {
 			isIgnored := false
-			for _, column := range ignoreColumn_ {
+			for _, column := range column_ {
 				if column == f.Column {
 					isIgnored = true
 				}
