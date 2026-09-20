@@ -114,10 +114,10 @@ func TestOracle(t *testing.T) {
 		Raw:                        []byte("oracle"),
 		LongRaw:                    []byte("oracle"),
 	}
-	d := orm.DbConfig{RawDB: db, DbType: orm.DbType_.Oracle}.Build()
+	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.Oracle}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
-	e2, err := d.Get[entity.TbDemo](nil).Must().Do()
+	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
 	r.NoError(err)
 	r.NotNil(e2.Date)
 	r.NotNil(e2.Timestamp)

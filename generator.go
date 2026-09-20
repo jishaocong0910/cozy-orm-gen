@@ -191,6 +191,9 @@ func (g *generator) mappingCustomType(fields []fieldTmplParam) ([]fieldTmplParam
 		for _, m := range g.customTypes {
 			if m.ct.match(f.ColumnType) {
 				f.FieldType = g.determineFieldType(m.ft, pkgNameToPathMap)
+				if f.FieldType != "any" {
+					f.IsValid = true
+				}
 				break
 			}
 		}

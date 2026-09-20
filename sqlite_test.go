@@ -114,13 +114,13 @@ func TestSqlite(t *testing.T) {
 		Clob:             new("sqlite"),
 		Blob:             []byte("sqlite"),
 	}
-	d := orm.DbConfig{RawDB: db, DbType: orm.DbType_.SQLite}.Build()
+	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.SQLite}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	t.Cleanup(func() {
 		os.RemoveAll("testdata/sqlite/gen")
 	})
-	e2, err := d.Get[entity.TbDemo](nil).Must().Do()
+	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
 	j1 := gen.ToJson(e)
 	j2 := gen.ToJson(e2)
 	r.Equal(j1, j2)

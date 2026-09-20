@@ -30,7 +30,8 @@ import (
 	pkg3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg2"
 	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg3"
 	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg4"
-	pkg4 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg5"
+	pkg0 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg5"
+	pkg1 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg6"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -123,10 +124,10 @@ func TestPostgres(t *testing.T) {
 	}
 	db, err := sql.Open("postgres", dsn)
 	r.NoError(err)
-	d := orm.DbConfig{RawDB: db, DbType: orm.DbType_.Postgres}.Build()
+	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.Postgres}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
-	e2, err := d.Get[entity.TbDemo](nil).Must().Do()
+	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
 	r.NoError(err)
 	r.NotNil(e2.Date)
 	r.NotNil(e2.Time)
@@ -204,9 +205,10 @@ func TestCustomType(t *testing.T) {
 			Mapping[*pkg_3.MyData4]("decimal(#,2)").
 			Mapping[*string]("decimal(20,2)").
 			Mapping[pkg_3.MyData4]("numeric(10 #)").
-			Mapping[pkg4.MyData5]("numeric").
+			Mapping[pkg0.MyData5]("numeric").
 			Mapping[int64]("double precision").
-			Mapping[string]("time(6) with time zone"),
+			Mapping[string]("time(6) with time zone").
+			Mapping[pkg1.MyData6]("gps_point"),
 	}.Gen()
 
 	t.Cleanup(func() {

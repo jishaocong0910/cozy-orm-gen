@@ -1,4 +1,4 @@
-package pkg
+package pkg0
 
 type MyData5 struct {
 }
