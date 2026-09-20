@@ -3,13 +3,13 @@
 package entity
 
 import (
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg"
-	pkg2 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg"
-	pkg3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg2"
-	pkg_2 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg3"
-	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg4"
-	pkg0 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg5"
-	pkg1 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg6"
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg"
+	pkg2 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg"
+	pkg3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg2"
+	pkg_2 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg3"
+	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg4"
+	pkg0 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg5"
+	pkg1 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg6"
 )
 
 type TbDemo2 struct {

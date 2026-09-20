@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gen_test
+package oracle_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -24,7 +26,7 @@ import (
 
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/oracle/entity"
+	"github.com/jishaocong0910/cozy-orm-gen/test/oracle/internal/entity"
 	go_ora "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -57,7 +59,7 @@ func TestOracle(t *testing.T) {
 
 	db, err := sql.Open("oracle", dsn)
 	r.NoError(err)
-	script, err := os.ReadFile("testdata/oracle/script.sql")
+	script, err := os.ReadFile("script.sql")
 	r.NoError(err)
 	queries := strings.Split(string(script), ";")
 	for _, s := range queries {
@@ -71,15 +73,15 @@ func TestOracle(t *testing.T) {
 	gen.Config{
 		DriverType: gen.DriverType_.Oracle,
 		Dsn:        dsn,
-		FilePath:   "testdata/oracle/gen/entity",
+		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/oracle/gen")
+		os.RemoveAll("gen")
 	})
 
-	gen.CompareFile(r, "testdata/oracle/entity/tb_demo.go", "testdata/oracle/gen/entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo.go", "gen/entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	testDate := time.Date(testTime.Year(), testTime.Month(), testTime.Day(), 0, 0, 0, 0, time.Local)
@@ -134,7 +136,23 @@ func TestOracle(t *testing.T) {
 	e.Timestamp = nil
 	e.TimestampWithTimeZone = nil
 	e.TimestampWithLocalTimeZone = nil
-	j1 := gen.ToJson(e)
-	j2 := gen.ToJson(e2)
+	j1 := toJson(e)
+	j2 := toJson(e2)
 	r.Equal(j1, j2)
+}
+
+func compareFile(r *require.Assertions, path1, path2 string) {
+	file1, err := os.ReadFile(path1)
+	r.NoError(err)
+	file2, err := os.ReadFile(path2)
+	r.NoError(err)
+	r.Equal(string(file1), string(file2))
+}
+
+func toJson(t any) string {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(t)
+	return string(buffer.Bytes())
 }

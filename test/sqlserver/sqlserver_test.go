@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gen_test
+package sqlserver_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
@@ -25,7 +27,7 @@ import (
 
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/sqlserver/entity"
+	"github.com/jishaocong0910/cozy-orm-gen/test/sqlserver/internal/entity"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mssql"
@@ -54,7 +56,7 @@ func TestSqlServer(t *testing.T) {
 	db, err := sql.Open("mssql", dsn)
 	r.NoError(err)
 
-	script, err := os.ReadFile("testdata/sqlserver/script.sql")
+	script, err := os.ReadFile("script.sql")
 	r.NoError(err)
 	sqls := strings.Split(string(script), ";")
 	for _, s := range sqls {
@@ -68,15 +70,15 @@ func TestSqlServer(t *testing.T) {
 	gen.Config{
 		DriverType: gen.DriverType_.SQLServer,
 		Dsn:        dsn,
-		FilePath:   "testdata/sqlserver/gen/entity",
+		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/sqlserver/gen")
+		os.RemoveAll("gen")
 	})
 
-	gen.CompareFile(r, "testdata/sqlserver/entity/tb_demo.go", "testdata/sqlserver/gen/entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo.go", "gen/entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
@@ -136,7 +138,23 @@ func TestSqlServer(t *testing.T) {
 	e.Datetime = nil
 	e.Smalldatetime = nil
 	e.Binary = nil
-	j1 := gen.ToJson(e)
-	j2 := gen.ToJson(e2)
+	j1 := toJson(e)
+	j2 := toJson(e2)
 	r.Equal(j1, j2)
+}
+
+func compareFile(r *require.Assertions, path1, path2 string) {
+	file1, err := os.ReadFile(path1)
+	r.NoError(err)
+	file2, err := os.ReadFile(path2)
+	r.NoError(err)
+	r.Equal(string(file1), string(file2))
+}
+
+func toJson(t any) string {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(t)
+	return string(buffer.Bytes())
 }

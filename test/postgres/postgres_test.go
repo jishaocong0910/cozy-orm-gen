@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gen_test
+package postgres_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"os"
 	"testing"
@@ -24,14 +26,14 @@ import (
 
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/entity"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg"
-	pkg2 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg"
-	pkg3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg2"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg3"
-	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg4"
-	pkg0 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg5"
-	pkg1 "github.com/jishaocong0910/cozy-orm-gen/testdata/postgres/pkg/pkg6"
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/entity"
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg"
+	pkg2 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg"
+	pkg3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg2"
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg3"
+	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg4"
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg5"
+	pkg1 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg6"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -47,7 +49,7 @@ func TestPostgres(t *testing.T) {
 		postgres.WithDatabase("postgres"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("12345678"),
-		postgres.WithInitScripts("testdata/postgres/script.sql"),
+		postgres.WithInitScripts("script.sql"),
 		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("database system is ready to accept connections").WithStartupTimeout(time.Minute*5)),
 	)
 	r.NoError(err)
@@ -66,15 +68,15 @@ func TestPostgres(t *testing.T) {
 	gen.Config{
 		DriverType: gen.DriverType_.Postgres,
 		Dsn:        dsn,
-		FilePath:   "testdata/postgres/gen/entity",
+		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/postgres/gen")
+		os.RemoveAll("gen")
 	})
 
-	gen.CompareFile(r, "testdata/postgres/entity/tb_demo.go", "testdata/postgres/gen/entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo.go", "gen/entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
@@ -142,8 +144,8 @@ func TestPostgres(t *testing.T) {
 	e.TimeWithTimeZone = nil
 	e.Timestamp = nil
 	e.TimestampWithTimeZone = nil
-	j1 := gen.ToJson(e)
-	j2 := gen.ToJson(e2)
+	j1 := toJson(e)
+	j2 := toJson(e2)
 	r.Equal(j1, j2)
 }
 
@@ -156,7 +158,7 @@ func TestCustomType(t *testing.T) {
 		postgres.WithDatabase("postgres"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("12345678"),
-		postgres.WithInitScripts("testdata/postgres/script2.sql"),
+		postgres.WithInitScripts("script2.sql"),
 		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("database system is ready to accept connections").WithStartupTimeout(time.Minute*5)),
 	)
 	r.NoError(err)
@@ -176,7 +178,7 @@ func TestCustomType(t *testing.T) {
 		gen.Config{
 			DriverType: gen.DriverType_.Postgres,
 			Dsn:        dsn,
-			FilePath:   "testdata/postgres/gen/entity",
+			FilePath:   "gen/entity",
 			Mappings:   gen.Mapping[complex128]("int"),
 		}.Gen()
 	})
@@ -185,7 +187,7 @@ func TestCustomType(t *testing.T) {
 		gen.Config{
 			DriverType: gen.DriverType_.Postgres,
 			Dsn:        dsn,
-			FilePath:   "testdata/postgres/gen/entity",
+			FilePath:   "gen/entity",
 			Mappings:   gen.Mapping[*complex128]("int"),
 		}.Gen()
 	})
@@ -193,7 +195,7 @@ func TestCustomType(t *testing.T) {
 	gen.Config{
 		DriverType: gen.DriverType_.Postgres,
 		Dsn:        dsn,
-		FilePath:   "testdata/postgres/gen/entity",
+		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo2"},
 		Mappings: gen.Mapping[*pkg.MyData]("int").
 			Mapping[pkg2.MyData1]("DECIMAL(6)").
@@ -209,8 +211,24 @@ func TestCustomType(t *testing.T) {
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/postgres/gen")
+		os.RemoveAll("gen")
 	})
 
-	gen.CompareFile(r, "testdata/postgres/entity/tb_demo2.go", "testdata/postgres/gen/entity/tb_demo2.go")
+	compareFile(r, "internal/entity/tb_demo2.go", "gen/entity/tb_demo2.go")
+}
+
+func compareFile(r *require.Assertions, path1, path2 string) {
+	file1, err := os.ReadFile(path1)
+	r.NoError(err)
+	file2, err := os.ReadFile(path2)
+	r.NoError(err)
+	r.Equal(string(file1), string(file2))
+}
+
+func toJson(t any) string {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(t)
+	return string(buffer.Bytes())
 }

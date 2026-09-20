@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gen_test
+package sqlite_test
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,7 +25,7 @@ import (
 
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/sqlite/entity"
+	"github.com/jishaocong0910/cozy-orm-gen/test/sqlite/internal/entity"
 	"github.com/stretchr/testify/require"
 
 	_ "modernc.org/sqlite"
@@ -32,7 +34,7 @@ import (
 func TestSqlite(t *testing.T) {
 	r := require.New(t)
 
-	dsn := "testdata/sqlite/gen/sqlite.db"
+	dsn := "gen/sqlite.db"
 
 	err := os.MkdirAll(filepath.Dir(dsn), 0755)
 	r.NoError(err)
@@ -78,15 +80,15 @@ func TestSqlite(t *testing.T) {
 	gen.Config{
 		DriverType: gen.DriverType_.SQLite,
 		Dsn:        dsn,
-		FilePath:   "testdata/sqlite/gen/entity",
+		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/sqlite/gen")
+		os.RemoveAll("gen")
 	})
 
-	gen.CompareFile(r, "testdata/sqlite/entity/tb_demo.go", "testdata/sqlite/gen/entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo.go", "gen/entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
@@ -121,10 +123,26 @@ func TestSqlite(t *testing.T) {
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	t.Cleanup(func() {
-		os.RemoveAll("testdata/sqlite/gen")
+		os.RemoveAll("gen")
 	})
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
-	j1 := gen.ToJson(e)
-	j2 := gen.ToJson(e2)
+	j1 := toJson(e)
+	j2 := toJson(e2)
 	r.Equal(j1, j2)
+}
+
+func compareFile(r *require.Assertions, path1, path2 string) {
+	file1, err := os.ReadFile(path1)
+	r.NoError(err)
+	file2, err := os.ReadFile(path2)
+	r.NoError(err)
+	r.Equal(string(file1), string(file2))
+}
+
+func toJson(t any) string {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(t)
+	return string(buffer.Bytes())
 }

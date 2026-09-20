@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gen_test
+package mysql_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"log"
 	"os"
@@ -25,7 +27,7 @@ import (
 
 	orm "github.com/jishaocong0910/cozy-orm"
 	gen "github.com/jishaocong0910/cozy-orm-gen"
-	"github.com/jishaocong0910/cozy-orm-gen/testdata/mysql/entity"
+	"github.com/jishaocong0910/cozy-orm-gen/test/mysql/internal/entity"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
@@ -41,7 +43,7 @@ func TestMySql(t *testing.T) {
 		mysql.WithDatabase("test"),
 		mysql.WithUsername("root"),
 		mysql.WithPassword("12345678"),
-		mysql.WithScripts("testdata/mysql/script.sql"),
+		mysql.WithScripts("script.sql"),
 		testcontainers.WithWaitStrategyAndDeadline(time.Minute*5, wait.ForLog("port: 3306  MySQL Community Server").WithStartupTimeout(time.Minute*5)),
 	)
 	r.NoError(err)
@@ -68,7 +70,7 @@ func TestMySql(t *testing.T) {
 		os.RemoveAll("entity")
 	})
 
-	gen.CompareFile(r, "testdata/mysql/entity/tb_demo.go", "entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo.go", "entity/tb_demo.go")
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
@@ -132,7 +134,23 @@ func TestMySql(t *testing.T) {
 	e.Date = nil
 	e.Datetime = nil
 	e.Timestamp = nil
-	j1 := gen.ToJson(e)
-	j2 := gen.ToJson(e2)
+	j1 := toJson(e)
+	j2 := toJson(e2)
 	r.Equal(j1, j2)
+}
+
+func compareFile(r *require.Assertions, path1, path2 string) {
+	file1, err := os.ReadFile(path1)
+	r.NoError(err)
+	file2, err := os.ReadFile(path2)
+	r.NoError(err)
+	r.Equal(string(file1), string(file2))
+}
+
+func toJson(t any) string {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(t)
+	return string(buffer.Bytes())
 }
