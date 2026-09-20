@@ -33,7 +33,7 @@ type mySqlGenerator struct {
 func (di mySqlGenerator) getTableInfo(table string) ([]fieldTmplParam, string, error) {
 	var (
 		exists       bool
-		fields       []fieldTmplParam
+		field_       []fieldTmplParam
 		tableComment string
 	)
 
@@ -160,7 +160,7 @@ ORDER BY
 			Comment:         comment,
 			IsValid:         fieldType != "any",
 		}
-		fields = append(fields, f)
+		field_ = append(field_, f)
 	}
 	rows.Close()
 
@@ -177,7 +177,7 @@ ORDER BY
 	if !exists { // coverage-ignore
 		return nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return fields, tableComment, nil
+	return field_, tableComment, nil
 }
 
 func newMySqlDbInfo(dsn string) mySqlGenerator {

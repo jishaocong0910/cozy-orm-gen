@@ -32,7 +32,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 	var (
 		exists  bool
 		pkCount int
-		fields  []fieldTmplParam
+		field_  []fieldTmplParam
 	)
 
 	rows, err := di.db.Query("PRAGMA table_info(" + table + ")")
@@ -77,7 +77,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 			fieldType = "*int8"
 		case "SMALLINT", "INT2":
 			fieldType = "*int16"
-		case "MEDIUM INT", "INTEGER", "INT":
+		case "MEDIUM INT", "INTEGER", "INT", "INT4":
 			fieldType = "*int32"
 		case "BIGINT":
 			fieldType = "*int64"
@@ -89,7 +89,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 			fieldType = "*bool"
 		case "DATE", "DATETIME", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIME WITH TIME ZONE":
 			fieldType = "*time.Time"
-		case "TIME", "TEXT", "CHARACTER", "VARCHAR", "VARYING CHARACTER", "VARYING", "NCHAR", "NATIVE CHARACTER", "NVARCHAR", "CLOB":
+		case "STRING", "TIME", "TEXT", "CHARACTER", "VARCHAR", "VARYING CHARACTER", "VARYING", "NCHAR", "NATIVE CHARACTER", "NVARCHAR", "CLOB":
 			fieldType = "*string"
 		case "BLOB":
 			fieldType = "[]byte"
@@ -106,12 +106,12 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 			IsHasDefault:    isHasDefault,
 			IsValid:         fieldType != "any",
 		}
-		fields = append(fields, f)
+		field_ = append(field_, f)
 	}
 	rows.Close()
 
 	if pkCount > 1 { // coverage-ignore
-		for _, field := range fields {
+		for _, field := range field_ {
 			field.IsAutoIncrement = false
 		}
 	}
@@ -119,7 +119,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 	if !exists { // coverage-ignore
 		return nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return fields, "", nil
+	return field_, "", nil
 }
 
 func newSqliteDbInfo(dsn string) sqliteDbInfo {

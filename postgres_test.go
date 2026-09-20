@@ -78,9 +78,6 @@ func TestPostgres(t *testing.T) {
 
 	testTime := time.UnixMilli(1783676738000)
 	e := &entity.TbDemo{
-		Smallserial:           new(int16(1)),
-		Bigserial:             new(int64(1)),
-		Bigint:                new(int64(1)),
 		BigintArr:             new("{1,2,3}"),
 		Bit:                   []byte{'1', '0', '1', '1', '0'},
 		BitVarying:            new("10110"),

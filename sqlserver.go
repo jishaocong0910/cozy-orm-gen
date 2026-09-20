@@ -33,7 +33,7 @@ type sqlServerDbInfo struct {
 func (di sqlServerDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, error) {
 	var (
 		exists       bool
-		fields       []fieldTmplParam
+		field_       []fieldTmplParam
 		tableComment string
 	)
 
@@ -203,7 +203,7 @@ ORDER BY
 			IsValid:           fieldType != "any",
 			AutoIncrementStep: *incrementValue,
 		}
-		fields = append(fields, f)
+		field_ = append(field_, f)
 	}
 	rows.Close()
 
@@ -220,7 +220,7 @@ ORDER BY
 	if !exists { // coverage-ignore
 		return nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return fields, tableComment, nil
+	return field_, tableComment, nil
 }
 
 func newSqlServerDbInfo(dsn string) sqlServerDbInfo {
