@@ -40,12 +40,12 @@ type Config struct {
 	// 数据库连接URL
 	Dsn string
 	// 生成文件的文件夹，os.Getwd()的相对路径
-	FilePath    string
-	CoverFile   bool
-	OmitNameTag bool
-	Tables      []string
-	Ignores     map[string][]string
-	Mappings    customType_
+	FilePath       string
+	CoverFile      bool
+	OmitNameTag    bool
+	Tables         []string
+	Ignores        map[string][]string
+	CustomMappings customMappings
 }
 
 func (c Config) Gen() {
@@ -54,17 +54,17 @@ func (c Config) Gen() {
 
 func (c Config) build() *generator {
 	di := c.getDbInfo()
-	cts := c.getCustomTypes()
+	cts := c.getCustomMappings()
 	path := c.getOutPath()
 	return &generator{
-		dsn:         c.Dsn,
-		outPath:     path,
-		coverFile:   c.CoverFile,
-		omitNameTag: c.OmitNameTag,
-		table_:      c.Tables,
-		ignoreMap:   c.Ignores,
-		dbInfo:      di,
-		customType_: cts,
+		dsn:            c.Dsn,
+		outPath:        path,
+		coverFile:      c.CoverFile,
+		omitNameTag:    c.OmitNameTag,
+		tables:         c.Tables,
+		ignoreMap:      c.Ignores,
+		dbInfo:         di,
+		customMappings: cts,
 	}
 }
 
@@ -84,9 +84,9 @@ func (c Config) getOutPath() string {
 	return outPath
 }
 
-func (c Config) getCustomTypes() []customType {
-	cts := make([]customType, 0, len(c.Mappings))
-	for _, m := range c.Mappings {
+func (c Config) getCustomMappings() customMappings {
+	cts := make(customMappings, 0, len(c.CustomMappings))
+	for _, m := range c.CustomMappings {
 		switch m.ft.Kind() {
 		case reflect.Pointer, reflect.Slice, reflect.Map:
 			if !isValidFieldType(m.ft) { // coverage-ignore
@@ -98,7 +98,7 @@ func (c Config) getCustomTypes() []customType {
 			if !isValidFieldType(pt) { // coverage-ignore
 				panic("invalid field type \"" + m.ft.String() + "\"")
 			}
-			cts = append(cts, customType{ft: pt, ct: m.ct})
+			cts = append(cts, customMapping{ft: pt, ct: m.ct})
 		}
 	}
 	return cts
@@ -126,11 +126,11 @@ type generator struct {
 	outPath          string
 	coverFile        bool
 	omitNameTag      bool
-	table_           []string
+	tables           []string
 	ignoreMap        map[string][]string
 	dbInfo           dbInfo
-	customType_      []customType
-	entityTmplParam_ []entityTmplParam
+	customMappings   customMappings
+	entityTmplParams []entityTmplParam
 }
 
 func (g *generator) Gen() {
@@ -143,52 +143,52 @@ func (g *generator) Gen() {
 
 func (g *generator) prepareTmplParams() {
 	if g.dsn != "" {
-		for _, table := range g.table_ {
-			fields, comment, err := g.dbInfo.getTableInfo(table)
+		for _, item := range g.tables {
+			table, fields, comment, err := g.dbInfo.getTableInfo(item)
 			if err != nil { // coverage-ignore
 				logger.error(err.Error())
 				continue
 			}
 			fields = g.ignoreField(table, fields)
-			fields, imps := g.mappingCustomType(fields)
+			fields, imps := g.customMapping(fields)
 			etp := entityTmplParam{
 				Table:       table,
 				EntityName:  entityNameMapper.Convert(table),
-				Field_:      fields,
+				Fields:      fields,
 				Comment:     comment,
-				Import_:     imps,
+				Imports:     imps,
 				OmitNameTag: g.omitNameTag,
 			}
-			g.entityTmplParam_ = append(g.entityTmplParam_, etp)
+			g.entityTmplParams = append(g.entityTmplParams, etp)
 		}
 	}
 }
 
-func (g *generator) ignoreField(table string, field_ []fieldTmplParam) []fieldTmplParam {
-	column_ := g.ignoreMap[table]
-	if column_ != nil {
-		var f_ []fieldTmplParam
-		for _, f := range field_ {
+func (g *generator) ignoreField(table string, fields []fieldTmplParam) []fieldTmplParam {
+	columns := g.ignoreMap[table]
+	if columns != nil {
+		var fs []fieldTmplParam
+		for _, f := range fields {
 			isIgnored := false
-			for _, column := range column_ {
+			for _, column := range columns {
 				if column == f.Column {
 					isIgnored = true
 				}
 			}
 			if !isIgnored {
-				f_ = append(f_, f)
+				fs = append(fs, f)
 			}
 		}
-		field_ = f_
+		fields = fs
 	}
-	return field_
+	return fields
 }
 
-func (g *generator) mappingCustomType(field_ []fieldTmplParam) ([]fieldTmplParam, []string) {
+func (g *generator) customMapping(fields []fieldTmplParam) ([]fieldTmplParam, []string) {
 	pkgNameToPathMap := make(map[string]string)
-	for i := range field_ {
-		f := &field_[i]
-		for _, m := range g.customType_ {
+	for i := range fields {
+		f := &fields[i]
+		for _, m := range g.customMappings {
 			if m.ct.match(f.ColumnType) {
 				f.FieldType = g.determineFieldType(m.ft, pkgNameToPathMap)
 				if f.FieldType != "any" {
@@ -198,15 +198,15 @@ func (g *generator) mappingCustomType(field_ []fieldTmplParam) ([]fieldTmplParam
 			}
 		}
 	}
-	var imp_ []string
+	var imps []string
 	for name, path := range pkgNameToPathMap {
 		if name != path[strings.LastIndex(path, "/")+1:] {
-			imp_ = append(imp_, name+" \""+path+"\"")
+			imps = append(imps, name+" \""+path+"\"")
 		} else {
-			imp_ = append(imp_, "\""+path+"\"")
+			imps = append(imps, "\""+path+"\"")
 		}
 	}
-	return field_, imp_
+	return fields, imps
 }
 
 func (g *generator) determineFieldType(ft reflect.Type, pkgNameToPathMap map[string]string) string {
@@ -256,7 +256,7 @@ func (g *generator) determinePkgName(pkgPath, pkgName string, pkgNameToPaths map
 }
 
 func (g *generator) genEntity() {
-	for _, e := range g.entityTmplParam_ {
+	for _, e := range g.entityTmplParams {
 		err := g.createFile(g.outPath, entityFileNameMapper.Convert(e.EntityName), g.coverFile, entityTmpl, e)
 		if err == nil {
 			logger.info("create entity of table \"%s\" success", e.Table)
@@ -290,32 +290,32 @@ func (g *generator) createFile(outPath, fileName string, coverFile bool, tmpl *t
 	return nil
 }
 
-type customType_ []customType
+type customMappings []customMapping
 
-func (t customType_) Mapping[T any](columnType string) customType_ {
-	return append(t, customType{reflect.TypeFor[T](), parseColumnType(columnType)})
+func (t customMappings) Mapping[T any](columnType string) customMappings {
+	return append(t, customMapping{reflect.TypeFor[T](), parseColumnType(columnType)})
 }
 
-func Mapping[T any](columnType string) customType_ {
-	return customType_{customType{reflect.TypeFor[T](), parseColumnType(columnType)}}
+func CustomMapping[T any](columnType string) customMappings {
+	return customMappings{customMapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
 }
 
 type dbInfo interface {
-	getTableInfo(table string) ([]fieldTmplParam, string, error)
+	getTableInfo(table string) (string, []fieldTmplParam, string, error)
 }
 
-type customType struct {
+type customMapping struct {
 	ft reflect.Type
-	ct columnType
+	ct columnTypeInfo
 }
 
-type columnType struct {
+type columnTypeInfo struct {
 	dataType string
 	param1   string
 	param2   string
 }
 
-func (t columnType) match(columnType string) bool {
+func (t columnTypeInfo) match(columnType string) bool {
 	var match bool
 	for _, ct := range strings.Split(columnType, "|") {
 		t2 := parseColumnType(ct)
@@ -351,7 +351,7 @@ func (t columnType) match(columnType string) bool {
 // VARCHAR2(1 BYTE)
 // character varying(255)
 // varchar(20)[][]
-func parseColumnType(ct string) columnType {
+func parseColumnType(ct string) columnTypeInfo {
 	subs := columnTypeRegex.FindStringSubmatch(ct)
 	var dataType, param1, param2 string
 	if len(subs) > 1 {
@@ -373,15 +373,15 @@ func parseColumnType(ct string) columnType {
 		param1 = "#"
 		param2 = "#"
 	}
-	return columnType{dataType, param1, param2}
+	return columnTypeInfo{dataType, param1, param2}
 }
 
 type entityTmplParam struct {
 	Table       string
 	EntityName  string
-	Field_      []fieldTmplParam
+	Fields      []fieldTmplParam
 	Comment     string
-	Import_     []string
+	Imports     []string
 	OmitNameTag bool
 }
 

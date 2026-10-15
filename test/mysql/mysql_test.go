@@ -117,7 +117,7 @@ func TestMySql(t *testing.T) {
 	db, err := sql.Open("mysql", dsn)
 	r.NoError(err)
 	d := orm.DBConfig{
-		SqlDB:  db,
+		RawDB:  db,
 		DBType: orm.DBType_.MySQL,
 	}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()

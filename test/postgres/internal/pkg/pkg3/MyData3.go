@@ -2,7 +2,7 @@ package pkg_2
 
 type MyData3 string
 
-func (m MyData3) ToValue() string {
+func (m MyData3) ToArg() string {
 	return ""
 }
 

@@ -3,7 +3,7 @@ package pkg0
 type MyData6 struct {
 }
 
-func (m MyData6) ToValue() string {
+func (m MyData6) ToArg() string {
 	return ""
 }
 

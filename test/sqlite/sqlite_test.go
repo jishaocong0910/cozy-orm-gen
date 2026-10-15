@@ -119,7 +119,7 @@ func TestSqlite(t *testing.T) {
 		Clob:             new("sqlite"),
 		Blob:             []byte("sqlite"),
 	}
-	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.SQLite}.Build()
+	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.SQLite}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	t.Cleanup(func() {

@@ -29,42 +29,43 @@ type oracleInfo struct {
 	db *sql.DB
 }
 
-func (di oracleInfo) getTableInfo(table string) ([]fieldTmplParam, string, error) {
+func (di oracleInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+	table = strings.ToUpper(table)
 	var (
 		exists       bool
-		field_       []fieldTmplParam
+		fields       []fieldTmplParam
 		tableComment string
 	)
 
 	rows, err := di.db.Query(`SELECT
-	t.column_name,
-	t.data_type,
-	t.data_type,
-	t.data_precision,
-	t.data_scale,
-	t.char_length,
-	t.char_used = 'B',
-	t.data_length,
-	t.nullable = 'N',
-	t.data_default IS NOT NULL,
-	DECODE(t3.constraint_type, 'P', TRUE, FALSE ),
-	t4.comments
-FROM
-	user_tab_columns t
-LEFT JOIN user_cons_columns t2 ON
-	t.table_name = t2.table_name
-	AND t.COLUMN_NAME = t2.COLUMN_NAME
-LEFT JOIN user_constraints t3 ON
-	t2.constraint_name = t3.constraint_name
-	LEFT JOIN user_col_comments t4 ON
-	t.table_name = t4.table_name
-	AND t.COLUMN_NAME = t4.COLUMN_NAME
-WHERE
-	t.table_name = :1
-ORDER BY
-	t.column_id`, strings.ToUpper(table))
+    t.column_name,
+    t.data_type,
+    t.data_type,
+    t.data_precision,
+    t.data_scale,
+    t.char_length,
+    t.char_used = 'B',
+    t.data_length,
+    t.nullable = 'N',
+    t.data_default IS NOT NULL,
+    EXISTS (
+		SELECT 1
+		FROM user_cons_columns cc
+			 JOIN user_constraints c ON c.constraint_name = cc.constraint_name 
+			 				   		AND c.table_name = cc.table_name 
+		WHERE cc.table_name = t.table_name
+		  AND cc.column_name = t.column_name
+		  AND c.constraint_type = 'P'
+	) AS is_pk,
+    t.identity_column = 'YES',
+    t2.comments
+FROM user_tab_columns t
+	 LEFT JOIN user_col_comments t2 ON t.table_name = t2.table_name
+	       					  	   AND t.COLUMN_NAME = t2.COLUMN_NAME 
+WHERE t.table_name = :1
+ORDER BY t.column_id`, strings.ToUpper(table))
 	if err != nil { // coverage-ignore
-		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -82,11 +83,12 @@ ORDER BY
 			isNotNull    bool
 			isHasDefault bool
 			isPk         bool
+			isIdentity   bool
 			comment      *string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &charUseByte, &dataLength, &isNotNull, &isHasDefault, &isPk, &comment)
+		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &charUseByte, &dataLength, &isNotNull, &isHasDefault, &isPk, &isIdentity, &comment)
 		if err != nil { // coverage-ignore
-			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
 		dataType = strings.ToUpper(dataType)
@@ -186,17 +188,18 @@ ORDER BY
 		}
 
 		f := fieldTmplParam{
-			Column:       column,
-			ColumnType:   columnType,
-			FieldName:    fieldNameMapper.Convert(column),
-			FieldType:    fieldType,
-			IsPk:         isPk,
-			IsNotNull:    isNotNull,
-			IsHasDefault: isHasDefault,
-			Comment:      *comment,
-			IsValid:      fieldType != "any",
+			Column:          column,
+			ColumnType:      columnType,
+			FieldName:       fieldNameMapper.Convert(column),
+			FieldType:       fieldType,
+			IsPk:            isPk,
+			IsAutoIncrement: isIdentity,
+			IsNotNull:       isNotNull,
+			IsHasDefault:    isHasDefault,
+			Comment:         *comment,
+			IsValid:         fieldType != "any",
 		}
-		field_ = append(field_, f)
+		fields = append(fields, f)
 	}
 	rows.Close()
 
@@ -211,9 +214,9 @@ ORDER BY
 	}
 
 	if !exists { // coverage-ignore
-		return nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return field_, tableComment, nil
+	return table, fields, tableComment, nil
 }
 
 func newOracleDbInfo(dsn string) oracleInfo {

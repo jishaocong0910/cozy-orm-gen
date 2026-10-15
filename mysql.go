@@ -30,10 +30,10 @@ type mySqlGenerator struct {
 	database string
 }
 
-func (di mySqlGenerator) getTableInfo(table string) ([]fieldTmplParam, string, error) {
+func (di mySqlGenerator) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
 	var (
 		exists       bool
-		field_       []fieldTmplParam
+		fields       []fieldTmplParam
 		tableComment string
 	)
 
@@ -46,16 +46,13 @@ func (di mySqlGenerator) getTableInfo(table string) ([]fieldTmplParam, string, e
 	IS_NULLABLE = 'NO',
 	COLUMN_DEFAULT IS NOT NULL,
 	COLUMN_COMMENT
-FROM
-	information_schema.columns
-WHERE
-	TABLE_SCHEMA = ?
-	AND TABLE_NAME = ?
-ORDER BY
-	ORDINAL_POSITION`,
+FROM information_schema.columns
+WHERE TABLE_SCHEMA = ?
+  AND TABLE_NAME = ?
+ORDER BY ORDINAL_POSITION`,
 		di.database, table)
 	if err != nil { // coverage-ignore
-		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -74,7 +71,7 @@ ORDER BY
 		)
 		err := rows.Scan(&column, &dataType, &columnType, &isPk, &isAutoIncrement, &isNotNull, &isHasDefault, &comment)
 		if err != nil { // coverage-ignore
-			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
 		dataType = strings.ToLower(dataType)
@@ -160,7 +157,7 @@ ORDER BY
 			Comment:         comment,
 			IsValid:         fieldType != "any",
 		}
-		field_ = append(field_, f)
+		fields = append(fields, f)
 	}
 	rows.Close()
 
@@ -175,9 +172,9 @@ ORDER BY
 	}
 
 	if !exists { // coverage-ignore
-		return nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return field_, tableComment, nil
+	return table, fields, tableComment, nil
 }
 
 func newMySqlDbInfo(dsn string) mySqlGenerator {

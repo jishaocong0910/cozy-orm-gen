@@ -28,16 +28,16 @@ type sqliteDbInfo struct {
 	db *sql.DB
 }
 
-func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, error) {
+func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
 	var (
 		exists  bool
 		pkCount int
-		field_  []fieldTmplParam
+		fields  []fieldTmplParam
 	)
 
 	rows, err := di.db.Query("PRAGMA table_info(" + table + ")")
 	if err != nil { // coverage-ignore
-		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -56,7 +56,7 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 		)
 		err := rows.Scan(new(any), &column, &dataType, &isNotNull, &dfltValue, &isPk)
 		if err != nil { // coverage-ignore
-			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 		dataType = strings.ToUpper(dataType)
 		columnType = dataType
@@ -106,20 +106,20 @@ func (di sqliteDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 			IsHasDefault:    isHasDefault,
 			IsValid:         fieldType != "any",
 		}
-		field_ = append(field_, f)
+		fields = append(fields, f)
 	}
 	rows.Close()
 
 	if pkCount > 1 { // coverage-ignore
-		for _, field := range field_ {
+		for _, field := range fields {
 			field.IsAutoIncrement = false
 		}
 	}
 
 	if !exists { // coverage-ignore
-		return nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return field_, "", nil
+	return table, fields, "", nil
 }
 
 func newSqliteDbInfo(dsn string) sqliteDbInfo {

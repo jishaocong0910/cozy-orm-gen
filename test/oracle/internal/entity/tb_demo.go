@@ -6,8 +6,8 @@ import "time"
 
 // TbDemo table comment
 type TbDemo struct {
-	_  struct{} `orm:"table=tb_demo"`
-	Id *int64   `orm:"column=id;pk"`
+	_  struct{} `orm:"table=TB_DEMO"`
+	Id *int64   `orm:"column=id;pk;auto"`
 	// ROWID
 	Rowid *string `orm:"column=rowid"`
 	// UROWID

@@ -30,10 +30,10 @@ type sqlServerDbInfo struct {
 	schema string
 }
 
-func (di sqlServerDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, error) {
+func (di sqlServerDbInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
 	var (
 		exists       bool
-		field_       []fieldTmplParam
+		fields       []fieldTmplParam
 		tableComment string
 	)
 
@@ -55,39 +55,24 @@ func (di sqlServerDbInfo) getTableInfo(table string) ([]fieldTmplParam, string, 
 	END is_pk,
 	idc.increment_value,
 	ep.value comment
-FROM
-	sys.tables tb
-INNER JOIN 
-    sys.columns c ON
-	tb.object_id = c.object_id
-INNER JOIN 
-    sys.types t ON
-	c.user_type_id = t.user_type_id
-LEFT JOIN 
-    sys.identity_columns idc ON
-	idc.object_id = c.object_id
-	AND idc.column_id = c.column_id
-LEFT JOIN 
-    sys.index_columns ic ON
-	ic.object_id = c.object_id
-	AND ic.column_id = c.column_id
-LEFT JOIN 
-    sys.indexes i ON
-	i.object_id = ic.object_id
-	AND i.index_id = ic.index_id
-	AND i.is_primary_key = 1
-LEFT JOIN 
-    sys.extended_properties ep ON
-	ep.major_id = c.object_id
-	AND ep.minor_id = c.column_id
-	AND ep.name = 'MS_Description'
-WHERE
-	tb.name = :1
-	AND SCHEMA_NAME(tb.schema_id) = :2
-ORDER BY
-	c.column_id`, table, di.schema)
+FROM sys.tables tb
+	 INNER JOIN sys.columns c ON tb.object_id = c.object_id
+	 INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+	 LEFT JOIN sys.identity_columns idc ON idc.object_id = c.object_id
+									   AND idc.column_id = c.column_id
+	 LEFT JOIN sys.index_columns ic ON ic.object_id = c.object_id
+								   AND ic.column_id = c.column_id
+	 LEFT JOIN sys.indexes i ON i.object_id = ic.object_id
+							AND i.index_id = ic.index_id
+							AND i.is_primary_key = 1
+	 LEFT JOIN sys.extended_properties ep ON ep.major_id = c.object_id
+										 AND ep.minor_id = c.column_id
+										 AND ep.name = 'MS_Description'
+WHERE tb.name = :1
+  AND SCHEMA_NAME(tb.schema_id) = :2
+ORDER BY c.column_id`, table, di.schema)
 	if err != nil { // coverage-ignore
-		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -109,7 +94,7 @@ ORDER BY
 		)
 		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
-			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 		dataType = strings.ToLower(dataType)
 		if comment == nil {
@@ -203,7 +188,7 @@ ORDER BY
 			IsValid:           fieldType != "any",
 			AutoIncrementStep: *incrementValue,
 		}
-		field_ = append(field_, f)
+		fields = append(fields, f)
 	}
 	rows.Close()
 
@@ -218,9 +203,9 @@ ORDER BY
 	}
 
 	if !exists { // coverage-ignore
-		return nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return field_, tableComment, nil
+	return table, fields, tableComment, nil
 }
 
 func newSqlServerDbInfo(dsn string) sqlServerDbInfo {

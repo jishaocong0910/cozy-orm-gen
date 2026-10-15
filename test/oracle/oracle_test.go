@@ -86,7 +86,6 @@ func TestOracle(t *testing.T) {
 	testTime := time.UnixMilli(1783676738000)
 	testDate := time.Date(testTime.Year(), testTime.Month(), testTime.Day(), 0, 0, 0, 0, time.Local)
 	e := &entity.TbDemo{
-		Id:                         new(int64(1)),
 		Rowid:                      new("AAAR1NAAAAAAI+RAAA"),
 		Urowid:                     new("AAAR1NAAAAAAI+RAAA"),
 		Char:                       new("oracle"),
@@ -116,7 +115,7 @@ func TestOracle(t *testing.T) {
 		Raw:                        []byte("oracle"),
 		LongRaw:                    []byte("oracle"),
 	}
-	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.Oracle}.Build()
+	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.Oracle}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()

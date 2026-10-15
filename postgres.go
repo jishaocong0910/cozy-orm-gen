@@ -30,10 +30,10 @@ type postgresInfo struct {
 	schema string
 }
 
-func (di postgresInfo) getTableInfo(table string) ([]fieldTmplParam, string, error) {
+func (di postgresInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
 	var (
 		exists       bool
-		field_       []fieldTmplParam
+		fields       []fieldTmplParam
 		tableComment string
 	)
 
@@ -48,34 +48,22 @@ func (di postgresInfo) getTableInfo(table string) ([]fieldTmplParam, string, err
 	a.attnotnull,
 	pg_get_expr(d.adbin, d.adrelid),
 	col_description(a.attrelid, a.attnum)
-from
-	pg_attribute a
-join 
-    pg_class c on
-	a.attrelid = c.oid
-join 
-    pg_namespace n on
-	c.relnamespace = n.oid
-join 
-    pg_type t on
-	a.atttypid = t.oid
-left join 
-    pg_attrdef d on
-	d.adrelid = a.attrelid
-	and d.adnum = a.attnum
-left join 
-    pg_index i on
-	a.attrelid = i.indrelid
-	and a.attnum = any(i.indkey)
-where
-	n.nspname = $1
-	and c.relname = $2
-	and a.attnum > 0
-	and not a.attisdropped
+from pg_attribute a
+	 join pg_class c on a.attrelid = c.oid
+	 join pg_namespace n on c.relnamespace = n.oid
+	 join pg_type t on a.atttypid = t.oid
+	 left join pg_attrdef d on d.adrelid = a.attrelid
+	                       and d.adnum = a.attnum
+	 left join pg_index i on a.attrelid = i.indrelid
+	                	 and a.attnum = any(i.indkey)
+where n.nspname = $1
+  and c.relname = $2
+  and a.attnum > 0
+  and not a.attisdropped
 order by
 	a.attnum`, di.schema, table)
 	if err != nil { // coverage-ignore
-		return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -98,7 +86,7 @@ order by
 		)
 		err := rows.Scan(&column, &typname, &columnType, &attndims, &atttypmod, &isPk, &isIdentity, &isNotNull, &columnDefault, &description)
 		if err != nil { // coverage-ignore
-			return nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 		if description == nil {
 			description = new("")
@@ -222,7 +210,7 @@ order by
 			Comment:         *description,
 			IsValid:         fieldType != "any",
 		}
-		field_ = append(field_, f)
+		fields = append(fields, f)
 	}
 	rows.Close()
 
@@ -248,9 +236,9 @@ where
 	}
 
 	if !exists { // coverage-ignore
-		return nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, "", errors.New("\"" + table + "\" is not exists")
 	}
-	return field_, tableComment, nil
+	return table, fields, tableComment, nil
 }
 
 func newPostgresDbInfo(dsn string) postgresInfo {

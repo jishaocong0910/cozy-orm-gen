@@ -108,7 +108,7 @@ func TestSqlServer(t *testing.T) {
 		Varbinary:      []byte("123"),
 		Image:          []byte("123"),
 	}
-	d := orm.DBConfig{SqlDB: db, DBType: orm.DBType_.SQLServer}.Build()
+	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.SQLServer}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()

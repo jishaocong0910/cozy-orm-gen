@@ -1,6 +1,6 @@
 CREATE TABLE tb_demo
 (
-    "id"                             INTEGER PRIMARY KEY,
+    "id"                             INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     "rowid"                          ROWID,
     "urowid"                         UROWID,
     "char"                           CHAR(10),

@@ -1,10 +1,10 @@
 module github.com/jishaocong0910/cozy-orm-gen
 
-go 1.27rc1
+go 1.27
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/jishaocong0910/cozy-orm v1.2.10-0.20260920023252-d581770871d4
+	github.com/jishaocong0910/cozy-orm v1.2.10-0.20261015102825-e22774367eb0
 	github.com/jishaocong0910/enum v1.1.6
 	github.com/lib/pq v1.10.9
 	github.com/microsoft/go-mssqldb v1.8.0
