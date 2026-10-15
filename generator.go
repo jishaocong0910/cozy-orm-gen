@@ -33,13 +33,9 @@ import (
 	_ "unsafe"
 )
 
-// Config 生成配置
 type Config struct {
-	// 数据库类型
-	DriverType DriverType
-	// 数据库连接URL
-	Dsn string
-	// 生成文件的文件夹，os.Getwd()的相对路径
+	DBType         orm.DBType
+	Dsn            string
 	FilePath       string
 	CoverFile      bool
 	OmitNameTag    bool
@@ -105,16 +101,16 @@ func (c Config) getCustomMappings() customMappings {
 }
 
 func (c Config) getDbInfo() dbInfo {
-	switch c.DriverType.String() {
-	case DriverType_.MySQL.String():
+	switch c.DBType.String() {
+	case orm.DBType_.MySQL.String():
 		return newMySqlDbInfo(c.Dsn)
-	case DriverType_.Oracle.String():
+	case orm.DBType_.Oracle.String():
 		return newOracleDbInfo(c.Dsn)
-	case DriverType_.Postgres.String():
+	case orm.DBType_.PostgreSQL.String():
 		return newPostgresDbInfo(c.Dsn)
-	case DriverType_.SQLServer.String():
+	case orm.DBType_.SQLServer.String():
 		return newSqlServerDbInfo(c.Dsn)
-	case DriverType_.SQLite.String():
+	case orm.DBType_.SQLite.String():
 		return newSqliteDbInfo(c.Dsn)
 	default: // coverage-ignore
 		panic("this DB type is not supported yet")

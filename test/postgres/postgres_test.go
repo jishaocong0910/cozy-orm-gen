@@ -66,7 +66,7 @@ func TestPostgres(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DriverType: gen.DriverType_.Postgres,
+		DriverType: gen.DriverType_.PostgreSQL,
 		Dsn:        dsn,
 		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo"},
@@ -176,7 +176,7 @@ func TestCustomMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "complex128"`, func() {
 		gen.Config{
-			DriverType:     gen.DriverType_.Postgres,
+			DriverType:     gen.DriverType_.PostgreSQL,
 			Dsn:            dsn,
 			FilePath:       "gen/entity",
 			CustomMappings: gen.CustomMapping[complex128]("int"),
@@ -185,7 +185,7 @@ func TestCustomMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "*complex128"`, func() {
 		gen.Config{
-			DriverType:     gen.DriverType_.Postgres,
+			DriverType:     gen.DriverType_.PostgreSQL,
 			Dsn:            dsn,
 			FilePath:       "gen/entity",
 			CustomMappings: gen.CustomMapping[*complex128]("int"),
@@ -193,7 +193,7 @@ func TestCustomMapping(t *testing.T) {
 	})
 
 	gen.Config{
-		DriverType: gen.DriverType_.Postgres,
+		DriverType: gen.DriverType_.PostgreSQL,
 		Dsn:        dsn,
 		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo2"},
