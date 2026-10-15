@@ -176,19 +176,19 @@ func TestCustomMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "complex128"`, func() {
 		gen.Config{
-			DriverType:     gen.DriverType_.PostgreSQL,
-			Dsn:            dsn,
-			FilePath:       "gen/entity",
-			CustomMappings: gen.CustomMapping[complex128]("int"),
+			DriverType: gen.DriverType_.PostgreSQL,
+			Dsn:        dsn,
+			FilePath:   "gen/entity",
+			Mappings:   gen.Mapping[complex128]("int"),
 		}.Gen()
 	})
 
 	r.PanicsWithValue(`invalid field type "*complex128"`, func() {
 		gen.Config{
-			DriverType:     gen.DriverType_.PostgreSQL,
-			Dsn:            dsn,
-			FilePath:       "gen/entity",
-			CustomMappings: gen.CustomMapping[*complex128]("int"),
+			DriverType: gen.DriverType_.PostgreSQL,
+			Dsn:        dsn,
+			FilePath:   "gen/entity",
+			Mappings:   gen.Mapping[*complex128]("int"),
 		}.Gen()
 	})
 
@@ -197,7 +197,7 @@ func TestCustomMapping(t *testing.T) {
 		Dsn:        dsn,
 		FilePath:   "gen/entity",
 		Tables:     []string{"tb_demo2"},
-		CustomMappings: gen.CustomMapping[*pkg.MyData]("int").
+		Mappings: gen.Mapping[*pkg.MyData]("int").
 			Mapping[pkg2.MyData1]("DECIMAL(6)").
 			Mapping[pkg3.MyData2]("numeric(#)").
 			Mapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) ").
