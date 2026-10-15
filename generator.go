@@ -417,21 +417,16 @@ var (
 	entityFileNameMapper = orm.NewNameMapper().LowerSnakeCase().AddSuffix(".go")
 	pkgNameRegex         = regexp.MustCompile(`^([a-zA-Z_](?:\w*[a-zA-Z_])*)(\d*)$`)
 	columnTypeRegex      = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)
-	logger               = func() struct {
-		info  func(msg string, args ...any)
-		error func(msg string, args ...any)
-	} {
-		out := log.New(os.Stdout, "", log.LstdFlags)
-		return struct {
-			info  func(msg string, args ...any)
-			error func(msg string, args ...any)
-		}{
-			info: func(msg string, args ...any) {
-				out.Printf("INFO "+msg+"\n", args...)
-			},
-			error: func(msg string, args ...any) { // coverage-ignore
-				out.Printf("ERROR "+msg+"\n", args...)
-			},
-		}
-	}()
+	logger               = _logger{out: log.New(os.Stdout, "", log.LstdFlags)}
 )
+
+type _logger struct {
+	out *log.Logger
+}
+
+func (l _logger) info(msg string, args ...any) {
+	l.out.Printf("INFO "+msg+"\n", args...)
+}
+func (l _logger) error(msg string, args ...any) { // coverage-ignore
+	l.out.Printf("ERROR "+msg+"\n", args...)
+}
