@@ -16,13 +16,10 @@ package gen
 
 import (
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	_ "github.com/sijms/go-ora/v2"
 )
 
 type oracleInfo struct {
@@ -219,10 +216,6 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 	return table, fields, tableComment, nil
 }
 
-func newOracleDbInfo(dsn string) oracleInfo {
-	db, err := sql.Open("oracle", dsn)
-	if err != nil { // coverage-ignore
-		panic(err)
-	}
+func newOracleDbInfo(db *sql.DB) oracleInfo {
 	return oracleInfo{db: db}
 }

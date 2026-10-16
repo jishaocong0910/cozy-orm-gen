@@ -32,6 +32,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mssql"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	_ "github.com/microsoft/go-mssqldb"
 )
 
 func TestSqlServer(t *testing.T) {
@@ -68,8 +70,8 @@ func TestSqlServer(t *testing.T) {
 	}
 
 	gen.Config{
+		DB:       db,
 		DBType:   orm.DBType_.SQLServer,
-		Dsn:      dsn,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo"},
 	}.Gen()

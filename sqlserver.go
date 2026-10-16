@@ -16,13 +16,10 @@ package gen
 
 import (
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	_ "github.com/microsoft/go-mssqldb"
 )
 
 type sqlServerDbInfo struct {
@@ -208,21 +205,15 @@ ORDER BY c.column_id`, table, di.schema)
 	return table, fields, tableComment, nil
 }
 
-func newSqlServerDbInfo(dsn string) sqlServerDbInfo {
-	db, err := sql.Open("mssql", dsn)
+func newSqlServerDbInfo(db *sql.DB) sqlServerDbInfo {
+	di := sqlServerDbInfo{db: db}
+	rows, err := di.db.Query("SELECT SCHEMA_NAME()")
 	if err != nil { // coverage-ignore
 		panic(err)
 	}
-	di := sqlServerDbInfo{db: db}
-	if di.db != nil {
-		rows, err := di.db.Query("SELECT SCHEMA_NAME()")
-		if err != nil { // coverage-ignore
-			panic(err)
-		}
-		if rows.Next() {
-			rows.Scan(&di.schema)
-		}
-		rows.Close()
+	if rows.Next() {
+		rows.Scan(&di.schema)
 	}
+	rows.Close()
 	return di
 }

@@ -78,8 +78,8 @@ func TestSqlite(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
+		DB:       db,
 		DBType:   orm.DBType_.SQLite,
-		Dsn:      dsn,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo"},
 	}.Gen()

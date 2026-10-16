@@ -32,6 +32,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func TestMySql(t *testing.T) {
@@ -56,10 +58,12 @@ func TestMySql(t *testing.T) {
 	dsn, err := mysqlContainer.ConnectionString(ctx)
 	r.NoError(err)
 	dsn += "?parseTime=true&loc=Local"
+	db, err := sql.Open("mysql", dsn)
+	r.NoError(err)
 
 	gen.Config{
+		DB:               db,
 		DBType:           orm.DBType_.MySQL,
-		Dsn:              dsn,
 		CoverFile:        true,
 		OmitNameTag:      true,
 		Tables:           []string{"demo"},
@@ -116,8 +120,6 @@ func TestMySql(t *testing.T) {
 		Real:              new(1.1),
 		Boolean:           new(true),
 	}
-	db, err := sql.Open("mysql", dsn)
-	r.NoError(err)
 	d := orm.DBConfig{
 		RawDB:         db,
 		DBType:        orm.DBType_.MySQL,

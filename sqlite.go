@@ -16,12 +16,9 @@ package gen
 
 import (
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"strings"
-
-	_ "modernc.org/sqlite"
 )
 
 type sqliteDbInfo struct {
@@ -122,10 +119,6 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 	return table, fields, "", nil
 }
 
-func newSqliteDbInfo(dsn string) sqliteDbInfo {
-	db, err := sql.Open("sqlite", dsn)
-	if err != nil { // coverage-ignore
-		panic(err)
-	}
+func newSqliteDbInfo(db *sql.DB) sqliteDbInfo {
 	return sqliteDbInfo{db: db}
 }

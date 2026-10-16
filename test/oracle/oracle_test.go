@@ -31,6 +31,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	_ "github.com/sijms/go-ora/v2"
 )
 
 func TestOracle(t *testing.T) {
@@ -71,8 +73,8 @@ func TestOracle(t *testing.T) {
 	}
 
 	gen.Config{
+		DB:       db,
 		DBType:   orm.DBType_.Oracle,
-		Dsn:      dsn,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo"},
 	}.Gen()

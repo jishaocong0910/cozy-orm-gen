@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -38,6 +39,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func TestPostgres(t *testing.T) {
@@ -65,9 +68,12 @@ func TestPostgres(t *testing.T) {
 	dsn, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
 	r.NoError(err)
 
+	db, err := sql.Open("pgx", dsn)
+	r.NoError(err)
+
 	gen.Config{
+		DB:       db,
 		DBType:   orm.DBType_.PostgreSQL,
-		Dsn:      dsn,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo"},
 	}.Gen()
@@ -111,8 +117,8 @@ func TestPostgres(t *testing.T) {
 		Real:                  new(float32(1.1)),
 		Smallint:              new(int16(1)),
 		Text:                  new("postgres"),
-		Time:                  new(testTime),
-		TimeWithTimeZone:      new(testTime),
+		Time:                  new("12:30:00"),
+		TimeWithTimeZone:      new("12:30:00+08:00"),
 		Timestamp:             new(testTime),
 		TimestampWithTimeZone: new(testTime),
 		Tsquery:               new("'golang' & !'postgres'"),
@@ -121,9 +127,7 @@ func TestPostgres(t *testing.T) {
 		Uuid:                  new("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 		Xml:                   new("<invoice><id>123</id><amount>99.9</amount></invoice>"),
 	}
-	db, err := sql.Open("postgres", dsn)
-	r.NoError(err)
-	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.PostgreSQL}.Build()
+	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.PostgreSQL, Logger: logger{}, SqlLogLevel: orm.LogLevel_.Debug}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
@@ -149,7 +153,7 @@ func TestPostgres(t *testing.T) {
 	r.Equal(j1, j2)
 }
 
-func TestCustomMapping(t *testing.T) {
+func TestTypeMapping(t *testing.T) {
 	r := require.New(t)
 	ctx := context.Background()
 
@@ -173,11 +177,13 @@ func TestCustomMapping(t *testing.T) {
 
 	dsn, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
 	r.NoError(err)
+	db, err := sql.Open("pgx", dsn)
+	r.NoError(err)
 
 	r.PanicsWithValue(`invalid field type "complex128"`, func() {
 		gen.Config{
+			DB:           db,
 			DBType:       orm.DBType_.PostgreSQL,
-			Dsn:          dsn,
 			FilePath:     "gen/entity",
 			TypeMappings: gen.Mapping[complex128]("int"),
 		}.Gen()
@@ -185,16 +191,16 @@ func TestCustomMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "*complex128"`, func() {
 		gen.Config{
+			DB:           db,
 			DBType:       orm.DBType_.PostgreSQL,
-			Dsn:          dsn,
 			FilePath:     "gen/entity",
 			TypeMappings: gen.Mapping[*complex128]("int"),
 		}.Gen()
 	})
 
 	gen.Config{
+		DB:       db,
 		DBType:   orm.DBType_.PostgreSQL,
-		Dsn:      dsn,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo2"},
 		TypeMappings: gen.Mapping[*pkg.MyData]("int").
@@ -231,4 +237,23 @@ func toJson(t any) string {
 	encoder.SetEscapeHTML(false)
 	encoder.Encode(t)
 	return string(buffer.Bytes())
+}
+
+type logger struct {
+}
+
+func (l logger) Debug(ctx context.Context, msg string) {
+	fmt.Println(msg)
+}
+
+func (l logger) Info(ctx context.Context, msg string) {
+	fmt.Println(msg)
+}
+
+func (l logger) Warn(ctx context.Context, msg string) {
+	fmt.Println(msg)
+}
+
+func (l logger) Error(ctx context.Context, msg string) {
+	fmt.Println(msg)
 }

@@ -16,6 +16,7 @@ package gen
 
 import (
 	"bytes"
+	"database/sql"
 	_ "embed"
 	"errors"
 	"log"
@@ -34,8 +35,8 @@ import (
 )
 
 type Config struct {
+	DB               *sql.DB
 	DBType           orm.DBType
-	Dsn              string
 	FilePath         string
 	CoverFile        bool
 	OmitNameTag      bool
@@ -115,17 +116,20 @@ func (c Config) getEntityNameMapper() *orm.NameMapper {
 }
 
 func (c Config) getDbInfo() dbInfo {
+	if c.DB == nil {
+		panic("DB must not be nil")
+	}
 	switch c.DBType.String() {
 	case orm.DBType_.MySQL.String():
-		return newMySqlDbInfo(c.Dsn)
+		return newMySqlDbInfo(c.DB)
 	case orm.DBType_.Oracle.String():
-		return newOracleDbInfo(c.Dsn)
+		return newOracleDbInfo(c.DB)
 	case orm.DBType_.PostgreSQL.String():
-		return newPostgresDbInfo(c.Dsn)
+		return newPostgresDbInfo(c.DB)
 	case orm.DBType_.SQLServer.String():
-		return newSqlServerDbInfo(c.Dsn)
+		return newSqlServerDbInfo(c.DB)
 	case orm.DBType_.SQLite.String():
-		return newSqliteDbInfo(c.Dsn)
+		return newSqliteDbInfo(c.DB)
 	default: // coverage-ignore
 		panic("this DB type is not supported yet")
 	}

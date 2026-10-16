@@ -16,12 +16,9 @@ package gen
 
 import (
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"strings"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type mySqlGenerator struct {
@@ -177,23 +174,15 @@ ORDER BY ORDINAL_POSITION`,
 	return table, fields, tableComment, nil
 }
 
-func newMySqlDbInfo(dsn string) mySqlGenerator {
-	db, err := sql.Open("mysql", dsn)
+func newMySqlDbInfo(db *sql.DB) mySqlGenerator {
+	di := mySqlGenerator{db: db}
+	rows, err := di.db.Query("SELECT DATABASE()")
 	if err != nil { // coverage-ignore
 		panic(err)
 	}
-	di := mySqlGenerator{db: db}
-	if di.db != nil {
-		database := ""
-		rows, err := di.db.Query("SELECT DATABASE()")
-		if err != nil { // coverage-ignore
-			panic(err)
-		}
-		if rows.Next() {
-			rows.Scan(&database)
-		}
-		rows.Close()
-		di.database = database
+	if rows.Next() {
+		rows.Scan(&di.database)
 	}
+	rows.Close()
 	return di
 }

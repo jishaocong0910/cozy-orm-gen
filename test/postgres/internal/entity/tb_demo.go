@@ -76,11 +76,11 @@ type TbDemo struct {
 	// text
 	Text *string `orm:"column=text"`
 	// time
-	Time  *time.Time `orm:"column=time"`
-	Time2 *time.Time `orm:"column=time2"`
+	Time  *string `orm:"column=time"`
+	Time2 *string `orm:"column=time2"`
 	// time with time zone
-	TimeWithTimeZone  *time.Time `orm:"column=time_with_time_zone"`
-	TimeWithTimeZone2 *time.Time `orm:"column=time_with_time_zone2"`
+	TimeWithTimeZone  *string `orm:"column=time_with_time_zone"`
+	TimeWithTimeZone2 *string `orm:"column=time_with_time_zone2"`
 	// timestamp
 	Timestamp  *time.Time `orm:"column=timestamp"`
 	Timestamp2 *time.Time `orm:"column=timestamp2"`

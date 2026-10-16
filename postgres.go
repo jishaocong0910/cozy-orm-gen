@@ -16,13 +16,10 @@ package gen
 
 import (
 	"database/sql"
-	_ "embed"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	_ "github.com/lib/pq"
 )
 
 type postgresInfo struct {
@@ -152,7 +149,7 @@ order by
 				fieldType = "*string"
 				columnType += "|" + strings.ReplaceAll(columnType, "character varying", "varchar")
 			case "time":
-				fieldType = "*time.Time"
+				fieldType = "*string"
 				if atttypmod == -1 {
 					columnType = "time(6)|time(6) without time zone"
 				} else {
@@ -166,7 +163,7 @@ order by
 					columnType += "|timestamp(" + strconv.Itoa(atttypmod) + ")"
 				}
 			case "timetz":
-				fieldType = "*time.Time"
+				fieldType = "*string"
 				if atttypmod == -1 {
 					columnType = "timetz(6)|time(6) with time zone"
 				} else {
@@ -241,21 +238,15 @@ where
 	return table, fields, tableComment, nil
 }
 
-func newPostgresDbInfo(dsn string) postgresInfo {
-	db, err := sql.Open("postgres", dsn)
+func newPostgresDbInfo(db *sql.DB) postgresInfo {
+	di := postgresInfo{db: db}
+	rows, err := di.db.Query("SELECT CURRENT_SCHEMA()")
 	if err != nil { // coverage-ignore
 		panic(err)
 	}
-	di := postgresInfo{db: db}
-	if di.db != nil {
-		rows, err := di.db.Query("SELECT CURRENT_SCHEMA()")
-		if err != nil { // coverage-ignore
-			panic(err)
-		}
-		if rows.Next() {
-			rows.Scan(&di.schema)
-		}
-		rows.Close()
+	if rows.Next() {
+		rows.Scan(&di.schema)
 	}
+	rows.Close()
 	return di
 }
