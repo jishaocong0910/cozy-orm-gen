@@ -1,7 +1,7 @@
 CREATE TYPE gps_point AS (
     latitude NUMERIC(9, 6),
     longitude NUMERIC(9, 6)
-    );
+);
 
 CREATE TABLE tb_demo2
 (
