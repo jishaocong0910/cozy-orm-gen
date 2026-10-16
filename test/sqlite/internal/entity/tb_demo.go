@@ -20,6 +20,7 @@ type TbDemo struct {
 	DoublePrecision  *float64   `orm:"column=double_precision"`
 	Float            *float64   `orm:"column=float"`
 	Decimal          *float64   `orm:"column=decimal"`
+	Decimal2         *int64     `orm:"column=decimal2"`
 	Boolean          *bool      `orm:"column=boolean"`
 	Date             *time.Time `orm:"column=date"`
 	Datetime         *time.Time `orm:"column=datetime"`

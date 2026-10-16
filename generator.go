@@ -334,17 +334,23 @@ func (t columnTypeInfo) match(columnType string) bool {
 			continue
 		}
 		if t.param2 != "#" && t.param2 != t2.param2 {
+			var lenientMatch bool
 			if t.param2 == "" {
-				switch t2.param2 {
-				case "0", "byte", "char":
-				// 针对第二个参数可忽略匹配的场景，例如：
-				// decimal(10,0)
-				// varchar2(10 char)
-				// char(10 byte)
-				default:
-					continue
+				if t2.param2 == "0" || t2.param2 == "byte" || t2.param2 == "char" {
+					// 兼容第二个参数可忽略匹配的场景，例如t2为：
+					// decimal(10,0)
+					// varchar2(10 char)
+					// char(10 byte)
+					lenientMatch = true
 				}
-			} else {
+			} else if t.param2 == "0" {
+				if t2.param2 == "" {
+					// 兼容第二个参数可忽略匹配的场景，例如t2为：
+					// decimal(10)
+					lenientMatch = true
+				}
+			}
+			if !lenientMatch {
 				continue
 			}
 		}

@@ -133,32 +133,29 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 			fieldType = "*string"
 		case "NUMBER":
 			isNumber := true
-			if scale != nil {
-				if *scale == 0 {
-					if precision != nil {
-						if *precision == 1 {
-							fieldType = "*bool"
-						} else {
-							fieldType = "*int64"
-						}
+			if *scale == 0 {
+				if precision != nil {
+					if *precision == 1 {
+						fieldType = "*bool"
 					} else {
 						fieldType = "*int64"
-						columnType = "INT|INTEGER|SMALLINT"
-						isNumber = false
 					}
 				} else {
-					fieldType = "*float64"
+					fieldType = "*int64"
+					columnType = "INT|INTEGER|SMALLINT"
+					isNumber = false
 				}
-				if isNumber {
-					columnType += "("
-					if precision != nil {
-						columnType += strconv.Itoa(*precision)
-					}
-					columnType += "," + strconv.Itoa(*scale)
-					columnType += ")"
-				}
+			} else {
+				fieldType = "*float64"
 			}
 			if isNumber {
+				columnType += "("
+				if precision != nil {
+					columnType += strconv.Itoa(*precision)
+				}
+				columnType += "," + strconv.Itoa(*scale)
+				columnType += ")"
+
 				columnType += "|" + strings.ReplaceAll(columnType, "NUMBER", "NUMERIC") +
 					"|" + strings.ReplaceAll(columnType, "NUMBER", "DECIMAL") +
 					"|" + strings.ReplaceAll(columnType, "NUMBER", "DEC")

@@ -62,6 +62,7 @@ func TestSqlite(t *testing.T) {
     double_precision DOUBLE PRECISION,
     float FLOAT,
     decimal DECIMAL(8,2),
+    decimal2 DECIMAL(8),
     boolean BOOLEAN,
     date DATE,
     datetime DATETIME,
@@ -83,6 +84,9 @@ func TestSqlite(t *testing.T) {
 		DBType:   orm.DBType_.SQLite,
 		FilePath: "gen/entity",
 		Tables:   []string{"tb_demo"},
+		TypeMappings: gen.TypeMappings{
+			gen.NewTypeMapping[int64]("decimal(8,0)"),
+		},
 	}.Gen()
 
 	t.Cleanup(func() {
