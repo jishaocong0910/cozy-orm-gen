@@ -47,33 +47,34 @@ func TestSqlite(t *testing.T) {
 -- table comment
 (
 	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, -- auto_increment
-	int int, tinyint tinyint, -- tinyint
-	smallint smallint default 1, 
-	mediumint medium int, -- mediumint
-	bigint bigint, -- bigint
-	unsigned_big_int unsigned big int, -- unsigned big int
-	int2 int2, -- int2
-	int4 int4, -- int4
-	int8 int8, -- int8
-	real real, -- real
-    numeric numeric, -- numeric
-    double double, -- double
-    double_precision double precision, -- double precision 
-    float float, -- float
-    decimal decimal(8,2), -- decimal(8,2)
-    boolean boolean, -- boolean[]
-    date date, -- date
-    datetime datetime, -- datetime
-    string string, -- string
-    text text, -- text
-    character character, -- character
-    varchar varchar, -- varchar
-    varying_character varying character, -- varying character
-    nchar nchar, -- nchar
-    native_character native character, -- native character
-    nvarchar nvarchar, -- nvarchar
-    clob clob, -- clob
-    blob blob -- blob
+	int INT,
+	tinyint TINYINT,
+	smallint SMALLINT DEFAULT 1, 
+	mediumint MEDIUM INT,
+	bigint BIGINT,
+	unsigned_big_int UNSIGNED BIG INT,
+	int2 INT2,
+	int4 INT4,
+	int8 INT8,
+	real REAL,
+    numeric NUMERIC,
+    double DOUBLE,
+    double_precision DOUBLE PRECISION,
+    float FLOAT,
+    decimal DECIMAL(8,2),
+    boolean BOOLEAN,
+    date DATE,
+    datetime DATETIME,
+    string STRING,
+    text TEXT,
+    character CHARACTER,
+    varchar VARCHAR,
+    varying_character VARYING CHARACTER,
+    nchar NCHAR,
+    native_character NATIVE CHARACTER,
+    nvarchar nvarchar,
+    clob CLOB,
+    blob BLOB
 )`)
 	r.NoError(err)
 
