@@ -68,10 +68,10 @@ func TestSqlServer(t *testing.T) {
 	}
 
 	gen.Config{
-		DriverType: gen.DriverType_.SQLServer,
-		Dsn:        dsn,
-		FilePath:   "gen/entity",
-		Tables:     []string{"tb_demo"},
+		DBType:   orm.DBType_.SQLServer,
+		Dsn:      dsn,
+		FilePath: "gen/entity",
+		Tables:   []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {

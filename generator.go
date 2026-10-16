@@ -34,14 +34,16 @@ import (
 )
 
 type Config struct {
-	DBType      orm.DBType
-	Dsn         string
-	FilePath    string
-	CoverFile   bool
-	OmitNameTag bool
-	Tables      []string
-	Ignores     map[string][]string
-	Mappings    mappings
+	DBType           orm.DBType
+	Dsn              string
+	FilePath         string
+	CoverFile        bool
+	OmitNameTag      bool
+	Tables           []string
+	IgnoreColumns    map[string][]string
+	EntityNamePrefix string
+	EntityNameSubfix string
+	TypeMappings     typeMappings
 }
 
 func (c Config) Gen() {
@@ -50,17 +52,18 @@ func (c Config) Gen() {
 
 func (c Config) build() *generator {
 	di := c.getDbInfo()
-	cts := c.getMappings()
+	entityNameMapper := c.getEntityNameMapper()
+	typeMappings := c.getTypeMappings()
 	path := c.getOutPath()
 	return &generator{
-		dsn:         c.Dsn,
-		outPath:     path,
-		coverFile:   c.CoverFile,
-		omitNameTag: c.OmitNameTag,
-		tables:      c.Tables,
-		ignoreMap:   c.Ignores,
-		dbInfo:      di,
-		mappings:    cts,
+		dbInfo:           di,
+		outPath:          path,
+		coverFile:        c.CoverFile,
+		omitNameTag:      c.OmitNameTag,
+		tables:           c.Tables,
+		ignoreMap:        c.IgnoreColumns,
+		entityNameMapper: entityNameMapper,
+		typeMappings:     typeMappings,
 	}
 }
 
@@ -80,9 +83,9 @@ func (c Config) getOutPath() string {
 	return outPath
 }
 
-func (c Config) getMappings() mappings {
-	cts := make(mappings, 0, len(c.Mappings))
-	for _, m := range c.Mappings {
+func (c Config) getTypeMappings() typeMappings {
+	cts := make(typeMappings, 0, len(c.TypeMappings))
+	for _, m := range c.TypeMappings {
 		switch m.ft.Kind() {
 		case reflect.Pointer, reflect.Slice, reflect.Map:
 			if !isValidFieldType(m.ft) { // coverage-ignore
@@ -98,6 +101,17 @@ func (c Config) getMappings() mappings {
 		}
 	}
 	return cts
+}
+
+func (c Config) getEntityNameMapper() *orm.NameMapper {
+	mapper := orm.NewNameMapper().UpperCamelCase()
+	if c.EntityNamePrefix != "" {
+		mapper.AddPrefix(c.EntityNamePrefix)
+	}
+	if c.EntityNameSubfix != "" {
+		mapper.AddSuffix(c.EntityNameSubfix)
+	}
+	return mapper
 }
 
 func (c Config) getDbInfo() dbInfo {
@@ -118,15 +132,15 @@ func (c Config) getDbInfo() dbInfo {
 }
 
 type generator struct {
-	dsn              string
+	dbInfo           dbInfo
 	outPath          string
 	coverFile        bool
 	omitNameTag      bool
 	tables           []string
 	ignoreMap        map[string][]string
-	dbInfo           dbInfo
-	mappings         mappings
+	entityNameMapper *orm.NameMapper
 	entityTmplParams []entityTmplParam
+	typeMappings     typeMappings
 }
 
 func (g *generator) Gen() {
@@ -138,25 +152,23 @@ func (g *generator) Gen() {
 }
 
 func (g *generator) prepareTmplParams() {
-	if g.dsn != "" {
-		for _, item := range g.tables {
-			table, fields, comment, err := g.dbInfo.getTableInfo(item)
-			if err != nil { // coverage-ignore
-				logger.error(err.Error())
-				continue
-			}
-			fields = g.ignoreField(table, fields)
-			fields, imps := g.mapping(fields)
-			etp := entityTmplParam{
-				Table:       table,
-				EntityName:  entityNameMapper.Convert(table),
-				Fields:      fields,
-				Comment:     comment,
-				Imports:     imps,
-				OmitNameTag: g.omitNameTag,
-			}
-			g.entityTmplParams = append(g.entityTmplParams, etp)
+	for _, item := range g.tables {
+		table, fields, comment, err := g.dbInfo.getTableInfo(item)
+		if err != nil { // coverage-ignore
+			logger.error(err.Error())
+			continue
 		}
+		fields = g.ignoreField(table, fields)
+		fields, imps := g.mapping(fields)
+		etp := entityTmplParam{
+			Table:       table,
+			EntityName:  g.entityNameMapper.Convert(table),
+			Fields:      fields,
+			Comment:     comment,
+			Imports:     imps,
+			OmitNameTag: g.omitNameTag,
+		}
+		g.entityTmplParams = append(g.entityTmplParams, etp)
 	}
 }
 
@@ -184,7 +196,7 @@ func (g *generator) mapping(fields []fieldTmplParam) ([]fieldTmplParam, []string
 	pkgNameToPathMap := make(map[string]string)
 	for i := range fields {
 		f := &fields[i]
-		for _, m := range g.mappings {
+		for _, m := range g.typeMappings {
 			if m.ct.match(f.ColumnType) {
 				f.FieldType = g.determineFieldType(m.ft, pkgNameToPathMap)
 				if f.FieldType != "any" {
@@ -286,14 +298,14 @@ func (g *generator) createFile(outPath, fileName string, coverFile bool, tmpl *t
 	return nil
 }
 
-type mappings []mapping
+type typeMappings []mapping
 
-func (t mappings) Mapping[T any](columnType string) mappings {
+func (t typeMappings) Mapping[T any](columnType string) typeMappings {
 	return append(t, mapping{reflect.TypeFor[T](), parseColumnType(columnType)})
 }
 
-func Mapping[T any](columnType string) mappings {
-	return mappings{mapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
+func Mapping[T any](columnType string) typeMappings {
+	return typeMappings{mapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
 }
 
 type dbInfo interface {
@@ -313,7 +325,7 @@ type columnTypeInfo struct {
 
 func (t columnTypeInfo) match(columnType string) bool {
 	var match bool
-	for _, ct := range strings.Split(columnType, "|") {
+	for ct := range strings.SplitSeq(columnType, "|") {
 		t2 := parseColumnType(ct)
 		if t.dataType != t2.dataType {
 			continue
@@ -409,7 +421,6 @@ var (
 		return t
 	}()
 	fieldNameMapper      = orm.NewNameMapper().UpperCamelCase()
-	entityNameMapper     = orm.NewNameMapper().UpperCamelCase()
 	entityFileNameMapper = orm.NewNameMapper().LowerSnakeCase().AddSuffix(".go")
 	pkgNameRegex         = regexp.MustCompile(`^([a-zA-Z_](?:\w*[a-zA-Z_])*)(\d*)$`)
 	columnTypeRegex      = regexp.MustCompile(`^ *(\w+(?: *\w+)*) *(?:\( *([^, )]+)?(?: *,? *([^, ]+))?[^)]*\) *)?(?: *(\w.*\w) *)?$`)

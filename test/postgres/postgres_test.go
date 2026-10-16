@@ -66,10 +66,10 @@ func TestPostgres(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DriverType: gen.DriverType_.PostgreSQL,
-		Dsn:        dsn,
-		FilePath:   "gen/entity",
-		Tables:     []string{"tb_demo"},
+		DBType:   orm.DBType_.PostgreSQL,
+		Dsn:      dsn,
+		FilePath: "gen/entity",
+		Tables:   []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
@@ -123,7 +123,7 @@ func TestPostgres(t *testing.T) {
 	}
 	db, err := sql.Open("postgres", dsn)
 	r.NoError(err)
-	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.Postgres}.Build()
+	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.PostgreSQL}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
@@ -176,28 +176,28 @@ func TestCustomMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "complex128"`, func() {
 		gen.Config{
-			DriverType: gen.DriverType_.PostgreSQL,
-			Dsn:        dsn,
-			FilePath:   "gen/entity",
-			Mappings:   gen.Mapping[complex128]("int"),
+			DBType:       orm.DBType_.PostgreSQL,
+			Dsn:          dsn,
+			FilePath:     "gen/entity",
+			TypeMappings: gen.Mapping[complex128]("int"),
 		}.Gen()
 	})
 
 	r.PanicsWithValue(`invalid field type "*complex128"`, func() {
 		gen.Config{
-			DriverType: gen.DriverType_.PostgreSQL,
-			Dsn:        dsn,
-			FilePath:   "gen/entity",
-			Mappings:   gen.Mapping[*complex128]("int"),
+			DBType:       orm.DBType_.PostgreSQL,
+			Dsn:          dsn,
+			FilePath:     "gen/entity",
+			TypeMappings: gen.Mapping[*complex128]("int"),
 		}.Gen()
 	})
 
 	gen.Config{
-		DriverType: gen.DriverType_.PostgreSQL,
-		Dsn:        dsn,
-		FilePath:   "gen/entity",
-		Tables:     []string{"tb_demo2"},
-		Mappings: gen.Mapping[*pkg.MyData]("int").
+		DBType:   orm.DBType_.PostgreSQL,
+		Dsn:      dsn,
+		FilePath: "gen/entity",
+		Tables:   []string{"tb_demo2"},
+		TypeMappings: gen.Mapping[*pkg.MyData]("int").
 			Mapping[pkg2.MyData1]("DECIMAL(6)").
 			Mapping[pkg3.MyData2]("numeric(#)").
 			Mapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) ").

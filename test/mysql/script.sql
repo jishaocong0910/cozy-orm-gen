@@ -1,4 +1,4 @@
-CREATE TABLE tb_demo
+CREATE TABLE demo
 (
     `bigint_pk`          bigint primary key auto_increment comment 'bigint primary key auto_increment',
     `bit1`               bit(1) comment 'bit(1)',

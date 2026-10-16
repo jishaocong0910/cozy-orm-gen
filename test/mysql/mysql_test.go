@@ -58,22 +58,24 @@ func TestMySql(t *testing.T) {
 	dsn += "?parseTime=true&loc=Local"
 
 	gen.Config{
-		DriverType:  gen.DriverType_.MySQL,
-		Dsn:         dsn,
-		CoverFile:   true,
-		OmitNameTag: true,
-		Tables:      []string{"tb_demo"},
-		Ignores:     map[string][]string{"tb_demo": {"unused"}},
+		DBType:           orm.DBType_.MySQL,
+		Dsn:              dsn,
+		CoverFile:        true,
+		OmitNameTag:      true,
+		Tables:           []string{"demo"},
+		IgnoreColumns:    map[string][]string{"demo": {"unused"}},
+		EntityNamePrefix: "Tb",
+		EntityNameSubfix: "Entity",
 	}.Gen()
 
 	t.Cleanup(func() {
 		os.RemoveAll("entity")
 	})
 
-	compareFile(r, "internal/entity/tb_demo.go", "entity/tb_demo.go")
+	compareFile(r, "internal/entity/tb_demo_entity.go", "entity/tb_demo_entity.go")
 
 	testTime := time.UnixMilli(1783676738000)
-	e := &entity.TbDemo{
+	e := &entity.TbDemoEntity{
 		Bit1:              []byte{1},
 		Bit8:              []byte{1},
 		Tinyint:           new(int8(1)),
@@ -117,12 +119,13 @@ func TestMySql(t *testing.T) {
 	db, err := sql.Open("mysql", dsn)
 	r.NoError(err)
 	d := orm.DBConfig{
-		RawDB:  db,
-		DBType: orm.DBType_.MySQL,
+		RawDB:         db,
+		DBType:        orm.DBType_.MySQL,
+		TabNameMapper: orm.NewNameMapper().SubPrefix("Tb").SubSuffix("Entity").LowerCamelCase(),
 	}.Build()
-	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
+	_, err = d.Insert[entity.TbDemoEntity](nil).Must().Entities(e).Do()
 	r.NoError(err)
-	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
+	e2, err := d.FindOne[entity.TbDemoEntity](nil).Must().Do()
 	r.NoError(err)
 	r.NoError(err)
 	r.NotNil(e2.Date)

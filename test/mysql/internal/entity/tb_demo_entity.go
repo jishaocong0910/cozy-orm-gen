@@ -2,8 +2,8 @@ package entity
 
 import "time"
 
-// TbDemo table comment
-type TbDemo struct {
+// TbDemoEntity table comment
+type TbDemoEntity struct {
 	// bigint primary key auto_increment
 	BigintPk *int64 `orm:"pk;auto"`
 	// bit(1)

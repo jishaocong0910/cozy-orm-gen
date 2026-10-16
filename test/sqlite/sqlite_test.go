@@ -78,10 +78,10 @@ func TestSqlite(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DriverType: gen.DriverType_.SQLite,
-		Dsn:        dsn,
-		FilePath:   "gen/entity",
-		Tables:     []string{"tb_demo"},
+		DBType:   orm.DBType_.SQLite,
+		Dsn:      dsn,
+		FilePath: "gen/entity",
+		Tables:   []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
