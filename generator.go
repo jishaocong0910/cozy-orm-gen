@@ -98,7 +98,7 @@ func (c Config) getTypeMappings() TypeMappings {
 			if !isValidFieldType(pt) { // coverage-ignore
 				panic("invalid field type \"" + m.ft.String() + "\"")
 			}
-			cts = append(cts, mapping{ft: pt, ct: m.ct})
+			cts = append(cts, typeMapping{ft: pt, ct: m.ct})
 		}
 	}
 	return cts
@@ -302,21 +302,17 @@ func (g *generator) createFile(outPath, fileName string, coverFile bool, tmpl *t
 	return nil
 }
 
-type TypeMappings []mapping
+type TypeMappings []typeMapping
 
-func (t TypeMappings) Mapping[T any](columnType string) TypeMappings {
-	return append(t, mapping{reflect.TypeFor[T](), parseColumnType(columnType)})
-}
-
-func Mapping[T any](columnType string) TypeMappings {
-	return TypeMappings{mapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
+func NewTypeMapping[T any](columnType string) typeMapping {
+	return typeMapping{reflect.TypeFor[T](), parseColumnType(columnType)}
 }
 
 type dbInfo interface {
 	getTableInfo(table string) (string, []fieldTmplParam, string, error)
 }
 
-type mapping struct {
+type typeMapping struct {
 	ft reflect.Type
 	ct columnTypeInfo
 }
