@@ -44,7 +44,7 @@ type Config struct {
 	IgnoreColumns    map[string][]string
 	EntityNamePrefix string
 	EntityNameSubfix string
-	TypeMappings     typeMappings
+	TypeMappings     TypeMappings
 }
 
 func (c Config) Gen() {
@@ -84,8 +84,8 @@ func (c Config) getOutPath() string {
 	return outPath
 }
 
-func (c Config) getTypeMappings() typeMappings {
-	cts := make(typeMappings, 0, len(c.TypeMappings))
+func (c Config) getTypeMappings() TypeMappings {
+	cts := make(TypeMappings, 0, len(c.TypeMappings))
 	for _, m := range c.TypeMappings {
 		switch m.ft.Kind() {
 		case reflect.Pointer, reflect.Slice, reflect.Map:
@@ -144,7 +144,7 @@ type generator struct {
 	ignoreMap        map[string][]string
 	entityNameMapper *orm.NameMapper
 	entityTmplParams []entityTmplParam
-	typeMappings     typeMappings
+	typeMappings     TypeMappings
 }
 
 func (g *generator) Gen() {
@@ -302,14 +302,14 @@ func (g *generator) createFile(outPath, fileName string, coverFile bool, tmpl *t
 	return nil
 }
 
-type typeMappings []mapping
+type TypeMappings []mapping
 
-func (t typeMappings) Mapping[T any](columnType string) typeMappings {
+func (t TypeMappings) Mapping[T any](columnType string) TypeMappings {
 	return append(t, mapping{reflect.TypeFor[T](), parseColumnType(columnType)})
 }
 
-func Mapping[T any](columnType string) typeMappings {
-	return typeMappings{mapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
+func Mapping[T any](columnType string) TypeMappings {
+	return TypeMappings{mapping{reflect.TypeFor[T](), parseColumnType(columnType)}}
 }
 
 type dbInfo interface {
