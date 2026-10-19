@@ -4,8 +4,11 @@ import "time"
 
 // TbDemo table comment
 type TbDemo struct {
-	_  struct{} `orm:"table=TB_DEMO"`
-	Id *int64   `orm:"column=id;pk;auto"`
+	_ struct{} `orm:"table=TB_DEMO"`
+	// INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+	Id *int64 `orm:"column=id;pk;auto"`
+	// INTEGER DEFAULT ON NULL my_seq.NEXTVAL
+	Id2 *int64 `orm:"column=id2;auto"`
 	// ROWID
 	Rowid *string `orm:"column=rowid"`
 	// UROWID
