@@ -50,7 +50,11 @@ func (di sqlServerDbInfo) getTableInfo(table string) (string, []fieldTmplParam, 
 		WHEN i.is_primary_key = 1 THEN 1
 		ELSE 0
 	END is_pk,
-	idc.increment_value,
+	CASE 
+		WHEN dc.definition LIKE '%NEXT VALUE FOR%' THEN 1 
+		ELSE 0 
+	END is_seq,
+	ISNULL(idc.increment_value, 0),
 	ep.value comment
 FROM sys.tables tb
 	 INNER JOIN sys.columns c ON tb.object_id = c.object_id
@@ -65,6 +69,8 @@ FROM sys.tables tb
 	 LEFT JOIN sys.extended_properties ep ON ep.major_id = c.object_id
 										 AND ep.minor_id = c.column_id
 										 AND ep.name = 'MS_Description'
+	 LEFT JOIN sys.default_constraints dc ON dc.parent_object_id = c.object_id 
+										 AND dc.parent_column_id = c.column_id
 WHERE tb.name = :1
   AND SCHEMA_NAME(tb.schema_id) = :2
 ORDER BY c.column_id`, table, di.schema)
@@ -75,6 +81,7 @@ ORDER BY c.column_id`, table, di.schema)
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
+		isAutoIncrement := false
 
 		var (
 			column         string
@@ -86,10 +93,11 @@ ORDER BY c.column_id`, table, di.schema)
 			isNotNull      bool
 			isHasDefault   bool
 			isPk           bool
-			incrementValue *int
+			isSeq          bool
+			incrementValue int
 			comment        *string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &incrementValue, &comment)
+		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &isSeq, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -97,8 +105,8 @@ ORDER BY c.column_id`, table, di.schema)
 		if comment == nil {
 			comment = new("")
 		}
-		if incrementValue == nil {
-			incrementValue = new(0)
+		if isSeq || incrementValue > 0 {
+			isAutoIncrement = true
 		}
 
 		switch dataType {
@@ -173,17 +181,16 @@ ORDER BY c.column_id`, table, di.schema)
 		}
 
 		f := fieldTmplParam{
-			Column:            column,
-			ColumnType:        columnType,
-			FieldName:         fieldNameMapper.Convert(column),
-			FieldType:         fieldType,
-			IsPk:              isPk,
-			IsAutoIncrement:   *incrementValue > 0,
-			IsNotNull:         isNotNull,
-			IsHasDefault:      isHasDefault,
-			Comment:           *comment,
-			IsValid:           fieldType != "any",
-			AutoIncrementStep: *incrementValue,
+			Column:          column,
+			ColumnType:      columnType,
+			FieldName:       fieldNameMapper.Convert(column),
+			FieldType:       fieldType,
+			IsPk:            isPk,
+			IsAutoIncrement: isAutoIncrement,
+			IsNotNull:       isNotNull,
+			IsHasDefault:    isHasDefault,
+			Comment:         *comment,
+			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)
 	}

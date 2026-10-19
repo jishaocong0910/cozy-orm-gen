@@ -1,6 +1,9 @@
+CREATE SEQUENCE MySequence START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE tb_demo
 (
-    int              int IDENTITY(1,1) PRIMARY KEY,
+    id               bigint IDENTITY(1,1) PRIMARY KEY,
+    id2              bigint DEFAULT (NEXT VALUE FOR MySequence),
     tinyint          tinyint           DEFAULT 1,
     smallint         smallint NOT NULL DEFAULT 1,
     bigint           bigint,
@@ -38,7 +41,8 @@ CREATE TABLE tb_demo
 );
 
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'table comment', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo';
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'int IDENTITY(1,1)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'int';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bigint IDENTITY(1,1)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'id';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bigint DEFAULT (NEXT VALUE FOR MySequence)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'id2';
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'tinyint DEFAULT 1' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'tinyint';
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'smallint NOT NULL DEFAULT 1' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'smallint';
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bit NOT NULL' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'bit';
