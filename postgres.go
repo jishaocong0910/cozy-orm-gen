@@ -149,6 +149,7 @@ order by
 				fieldType = "*string"
 				columnType += "|" + strings.ReplaceAll(columnType, "character varying", "varchar")
 			case "time":
+				// lib/pq驱动支持将time类型转化为*time.Time，但pgx不支持，所以转化为通用的字符串
 				fieldType = "*string"
 				if atttypmod == -1 {
 					columnType = "time(6)|time(6) without time zone"
