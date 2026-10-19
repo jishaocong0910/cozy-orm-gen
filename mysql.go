@@ -77,11 +77,6 @@ ORDER BY ORDINAL_POSITION`,
 		switch dataType {
 		case "bit":
 			// golang无法将bit(1)转换为bool，和驱动有关
-			//if strings.Contains(columnType, "bit(1)") {
-			//	fieldType = "*bool"
-			//} else {
-			//	fieldType = "[]uint8"
-			//}
 			fieldType = "[]uint8"
 		case "tinyint":
 			if strings.Contains(columnType, "unsigned") {
