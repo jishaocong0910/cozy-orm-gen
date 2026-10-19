@@ -127,7 +127,7 @@ func TestPostgres(t *testing.T) {
 		Uuid:                  new("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 		Xml:                   new("<invoice><id>123</id><amount>99.9</amount></invoice>"),
 	}
-	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.PostgreSQL, Logger: logger{}, SqlLogLevel: orm.LogLevel_.Debug}.Build()
+	d := orm.Config{RawDB: db, DBType: orm.DBType_.PostgreSQL, Logger: logger{}, SqlLogLevel: orm.LogLevel_.Debug}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()

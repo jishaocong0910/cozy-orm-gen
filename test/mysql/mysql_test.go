@@ -120,7 +120,7 @@ func TestMySql(t *testing.T) {
 		Real:              new(1.1),
 		Boolean:           new(true),
 	}
-	d := orm.DBConfig{
+	d := orm.Config{
 		RawDB:         db,
 		DBType:        orm.DBType_.MySQL,
 		TabNameMapper: orm.NewNameMapper().SubPrefix("Tb").SubSuffix("Entity").LowerCamelCase(),

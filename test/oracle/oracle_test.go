@@ -117,7 +117,7 @@ func TestOracle(t *testing.T) {
 		Raw:                        []byte("oracle"),
 		LongRaw:                    []byte("oracle"),
 	}
-	d := orm.DBConfig{RawDB: db, DBType: orm.DBType_.Oracle}.Build()
+	d := orm.Config{RawDB: db, DBType: orm.DBType_.Oracle}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
