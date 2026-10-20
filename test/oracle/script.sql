@@ -19,6 +19,7 @@ CREATE TABLE tb_demo
     "number"                         NUMBER(10),
     "number_2"                       NUMBER(1),
     "number_3"                       NUMBER(10, 4),
+    "number_4"                       NUMBER,
     "float"                          FLOAT,
     "real"                           real,
     "binary_float"                   BINARY_FLOAT,
@@ -52,6 +53,7 @@ COMMENT ON COLUMN tb_demo."nvarchar2" IS 'NVARCHAR2(10)';
 COMMENT ON COLUMN tb_demo."number" IS 'NUMBER(10)';
 COMMENT ON COLUMN tb_demo."number_2" IS 'NUMBER(1)';
 COMMENT ON COLUMN tb_demo."number_3" IS 'NUMBER(10, 4)';
+COMMENT ON COLUMN tb_demo."number_4" IS 'NUMBER';
 COMMENT ON COLUMN tb_demo."float" IS 'FLOAT';
 COMMENT ON COLUMN tb_demo."binary_float" IS 'BINARY_FLOAT';
 COMMENT ON COLUMN tb_demo."binary_double" IS 'BINARY_DOUBLE';

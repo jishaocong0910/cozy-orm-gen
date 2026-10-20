@@ -140,7 +140,7 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 			fieldType = "*string"
 		case "NUMBER":
 			isNumber := true
-			if *scale == 0 {
+			if scale != nil && *scale == 0 {
 				if precision != nil {
 					if *precision == 1 {
 						fieldType = "*bool"
@@ -160,7 +160,9 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 				if precision != nil {
 					columnType += strconv.Itoa(*precision)
 				}
-				columnType += "," + strconv.Itoa(*scale)
+				if scale != nil {
+					columnType += "," + strconv.Itoa(*scale)
+				}
 				columnType += ")"
 
 				columnType += "|" + strings.ReplaceAll(columnType, "NUMBER", "NUMERIC") +
