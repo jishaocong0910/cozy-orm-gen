@@ -86,6 +86,8 @@ github.com/jishaocong0910/cozy-orm v1.2.10-0.20261016035700-16340c2ea0dc h1:BG27
 github.com/jishaocong0910/cozy-orm v1.2.10-0.20261016035700-16340c2ea0dc/go.mod h1:sFmuNlS50Opi5E1l++1aKsXw+Icj7Fj8BXx5KyBnJds=
 github.com/jishaocong0910/cozy-orm v1.2.10-0.20261019015016-78b9c531fa29 h1:zv4/mLcFx/hBSRw6dkYBdJkcKq3PwAfEEGA6Vpuor2c=
 github.com/jishaocong0910/cozy-orm v1.2.10-0.20261019015016-78b9c531fa29/go.mod h1:sFmuNlS50Opi5E1l++1aKsXw+Icj7Fj8BXx5KyBnJds=
+github.com/jishaocong0910/cozy-orm v1.2.10-0.20261020063656-5a13bdbdc3d3 h1:usMDaMwS/nF88IoPawmbYAF69vmRVf/K6LUZqymBq9o=
+github.com/jishaocong0910/cozy-orm v1.2.10-0.20261020063656-5a13bdbdc3d3/go.mod h1:sFmuNlS50Opi5E1l++1aKsXw+Icj7Fj8BXx5KyBnJds=
 github.com/jishaocong0910/enum v1.1.6 h1:nJT3QjTJk8wkW9qAvOYPE1DdkEitUf5n8kXIrHq9eh8=
 github.com/jishaocong0910/enum v1.1.6/go.mod h1:U+q+LG127pwJVAoPZHRw34t0cEWU4C+qPMfcT2K2hQw=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=

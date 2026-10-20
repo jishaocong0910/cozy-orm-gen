@@ -15,11 +15,8 @@
 package postgres_test
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -127,7 +124,7 @@ func TestPostgres(t *testing.T) {
 		Uuid:                  new("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 		Xml:                   new("<invoice><id>123</id><amount>99.9</amount></invoice>"),
 	}
-	d := orm.Config{RawDB: db, DBType: orm.DBType_.PostgreSQL, Logger: logger{}, SqlLogLevel: orm.LogLevel_.Debug}.Build()
+	d := orm.Config{RawDB: db, DBType: orm.DBType_.PostgreSQL}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
@@ -148,9 +145,7 @@ func TestPostgres(t *testing.T) {
 	e.TimeWithTimeZone = nil
 	e.Timestamp = nil
 	e.TimestampWithTimeZone = nil
-	j1 := toJson(e)
-	j2 := toJson(e2)
-	r.Equal(j1, j2)
+	r.Equal(e, e2)
 }
 
 func TestTypeMapping(t *testing.T) {
@@ -224,31 +219,4 @@ func compareFile(r *require.Assertions, path1, path2 string) {
 	file2, err := os.ReadFile(path2)
 	r.NoError(err)
 	r.Equal(string(file1), string(file2))
-}
-
-func toJson(t any) string {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	encoder.Encode(t)
-	return string(buffer.Bytes())
-}
-
-type logger struct {
-}
-
-func (l logger) Debug(ctx context.Context, msg string) {
-	fmt.Println(msg)
-}
-
-func (l logger) Info(ctx context.Context, msg string) {
-	fmt.Println(msg)
-}
-
-func (l logger) Warn(ctx context.Context, msg string) {
-	fmt.Println(msg)
-}
-
-func (l logger) Error(ctx context.Context, msg string) {
-	fmt.Println(msg)
 }

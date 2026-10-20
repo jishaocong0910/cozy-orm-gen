@@ -15,11 +15,8 @@
 package mysql_test
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
-
 	"log"
 	"os"
 	"testing"
@@ -139,9 +136,7 @@ func TestMySql(t *testing.T) {
 	e.Date = nil
 	e.Datetime = nil
 	e.Timestamp = nil
-	j1 := toJson(e)
-	j2 := toJson(e2)
-	r.Equal(j1, j2)
+	r.Equal(e, e2)
 }
 
 func compareFile(r *require.Assertions, path1, path2 string) {
@@ -150,12 +145,4 @@ func compareFile(r *require.Assertions, path1, path2 string) {
 	file2, err := os.ReadFile(path2)
 	r.NoError(err)
 	r.Equal(string(file1), string(file2))
-}
-
-func toJson(t any) string {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	encoder.Encode(t)
-	return string(buffer.Bytes())
 }

@@ -18,13 +18,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	regexp "regexp"
 	"strconv"
 	"strings"
 )
 
 type postgresInfo struct {
-	db     *sql.DB
-	schema string
+	db                  *sql.DB
+	schema              string
+	defaultNextvalRegex *regexp.Regexp
 }
 
 func (di postgresInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
@@ -85,18 +87,17 @@ order by
 		if err != nil { // coverage-ignore
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
+
 		if description == nil {
 			description = new("")
 		}
-
 		if typname[:1] == "_" {
 			typname = typname[1:]
 		}
-
 		if isIdentity {
 			isAutoIncrement = true
 		} else if columnDefault != nil {
-			if strings.HasPrefix(*columnDefault, "nextval(") {
+			if di.defaultNextvalRegex.MatchString(strings.ToLower(*columnDefault)) {
 				isAutoIncrement = true
 			} else {
 				isHasDefault = true
@@ -240,7 +241,7 @@ where
 }
 
 func newPostgresDbInfo(db *sql.DB) postgresInfo {
-	di := postgresInfo{db: db}
+	di := postgresInfo{db: db, defaultNextvalRegex: regexp.MustCompile(`^nextval\(.*\)$`)}
 	rows, err := di.db.Query("SELECT CURRENT_SCHEMA()")
 	if err != nil { // coverage-ignore
 		panic(err)

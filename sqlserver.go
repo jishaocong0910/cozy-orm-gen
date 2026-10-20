@@ -102,11 +102,12 @@ ORDER BY c.column_id`, table, di.schema)
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 		dataType = strings.ToLower(dataType)
-		if comment == nil {
-			comment = new("")
-		}
+
 		if isSeq || incrementValue > 0 {
 			isAutoIncrement = true
+		}
+		if comment == nil {
+			comment = new("")
 		}
 
 		switch dataType {

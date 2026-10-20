@@ -1,9 +1,9 @@
-CREATE SEQUENCE MySequence START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE my_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE tb_demo
 (
     id               bigint IDENTITY(1,1) PRIMARY KEY,
-    id2              bigint DEFAULT (NEXT VALUE FOR MySequence),
+    id2              bigint DEFAULT (NEXT VALUE FOR my_seq),
     tinyint          tinyint           DEFAULT 1,
     smallint         smallint NOT NULL DEFAULT 1,
     bigint           bigint,

@@ -18,12 +18,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 type oracleInfo struct {
-	db *sql.DB
+	db                  *sql.DB
+	defaultNextvalRegex *regexp.Regexp
 }
 
 func (di oracleInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
@@ -68,6 +70,8 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
+		isAutoIncrement := false
+
 		var (
 			column       string
 			dataType     string
@@ -91,6 +95,9 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 		dataType = strings.ToUpper(dataType)
 		if strings.HasPrefix(dataType, "TIMESTAMP") {
 			dataType = "TIMESTAMP"
+		}
+		if isIdentity {
+			isAutoIncrement = true
 		}
 		if comment == nil {
 			comment = new("")
@@ -187,7 +194,7 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 			FieldName:       fieldNameMapper.Convert(column),
 			FieldType:       fieldType,
 			IsPk:            isPk,
-			IsAutoIncrement: isIdentity,
+			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
 			IsHasDefault:    isHasDefault,
 			Comment:         *comment,
@@ -214,5 +221,5 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 }
 
 func newOracleDbInfo(db *sql.DB) oracleInfo {
-	return oracleInfo{db: db}
+	return oracleInfo{db: db, defaultNextvalRegex: regexp.MustCompile(`^nextval\(.*\)$`)}
 }

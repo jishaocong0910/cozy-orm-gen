@@ -55,9 +55,9 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 		if err != nil { // coverage-ignore
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
+
 		dataType = strings.ToUpper(dataType)
 		columnType = dataType
-
 		if isPk != 0 {
 			isAutoIncrement = true
 			pkCount++

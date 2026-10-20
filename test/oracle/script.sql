@@ -1,9 +1,6 @@
-CREATE SEQUENCE my_seq START WITH 1 INCREMENT BY 1;
-
 CREATE TABLE tb_demo
 (
     "id"                             INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    "id2"                            INTEGER DEFAULT ON NULL my_seq.NEXTVAL,
     "rowid"                          ROWID,
     "urowid"                         UROWID,
     "char"                           CHAR(10),
@@ -37,7 +34,6 @@ CREATE TABLE tb_demo
 
 COMMENT ON TABLE tb_demo IS 'table comment';
 COMMENT ON COLUMN tb_demo."id" IS 'INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY';
-COMMENT ON COLUMN tb_demo."id2" IS 'INTEGER DEFAULT ON NULL my_seq.NEXTVAL';
 COMMENT ON COLUMN tb_demo."rowid" IS 'ROWID';
 COMMENT ON COLUMN tb_demo."urowid" IS 'UROWID';
 COMMENT ON COLUMN tb_demo."char" IS 'CHAR(10)';

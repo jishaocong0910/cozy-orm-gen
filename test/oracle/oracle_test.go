@@ -15,10 +15,8 @@
 package oracle_test
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -130,16 +128,13 @@ func TestOracle(t *testing.T) {
 	e2.Timestamp = nil
 	e2.TimestampWithTimeZone = nil
 	e2.TimestampWithLocalTimeZone = nil
-
 	e.Char = new("oracle    ")
 	e.Nchar = new("oracle    ")
 	e.Date = nil
 	e.Timestamp = nil
 	e.TimestampWithTimeZone = nil
 	e.TimestampWithLocalTimeZone = nil
-	j1 := toJson(e)
-	j2 := toJson(e2)
-	r.Equal(j1, j2)
+	r.Equal(e, e2)
 }
 
 func compareFile(r *require.Assertions, path1, path2 string) {
@@ -148,12 +143,4 @@ func compareFile(r *require.Assertions, path1, path2 string) {
 	file2, err := os.ReadFile(path2)
 	r.NoError(err)
 	r.Equal(string(file1), string(file2))
-}
-
-func toJson(t any) string {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	encoder.Encode(t)
-	return string(buffer.Bytes())
 }

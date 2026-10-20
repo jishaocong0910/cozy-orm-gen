@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/jackc/pgx/v5 v5.11.0
-	github.com/jishaocong0910/cozy-orm v1.2.10-0.20261019015016-78b9c531fa29
+	github.com/jishaocong0910/cozy-orm v1.2.10-0.20261020063656-5a13bdbdc3d3
 	github.com/microsoft/go-mssqldb v1.8.0
 	github.com/sijms/go-ora/v2 v2.8.19
 	github.com/stretchr/testify v1.11.1
