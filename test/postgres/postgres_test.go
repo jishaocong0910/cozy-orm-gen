@@ -187,18 +187,19 @@ func TestTypeMapping(t *testing.T) {
 	})
 
 	gen.Config{
-		DB:       db,
-		DBType:   orm.DBType_.PostgreSQL,
-		FilePath: "gen/entity",
-		Tables:   []string{"tb_demo2"},
+		DB:        db,
+		DBType:    orm.DBType_.PostgreSQL,
+		FilePath:  "gen/entity",
+		CoverFile: true,
+		Tables:    []string{"tb_demo2"},
 		TypeMappings: gen.TypeMappings{
 			gen.NewTypeMapping[*pkg.MyData]("int"),
 			gen.NewTypeMapping[pkg2.MyData1]("DECIMAL(6)"),
-			gen.NewTypeMapping[pkg3.MyData2]("numeric(#)"),
-			gen.NewTypeMapping[*pkg_2.MyData3](" decimal ( 10 , 2 ) "),
-			gen.NewTypeMapping[*pkg_3.MyData4]("decimal(#,2)"),
+			gen.NewTypeMapping[pkg3.MyData2]("numeric(%)"),
+			gen.NewTypeMapping[*pkg_2.MyData3](" decimal ( 10 , _ ) "),
+			gen.NewTypeMapping[*pkg_3.MyData4]("decimal(9,3)"),
 			gen.NewTypeMapping[*string]("decimal(20,2)"),
-			gen.NewTypeMapping[pkg_3.MyData4]("numeric(10 #)"),
+			gen.NewTypeMapping[pkg_3.MyData4]("numeric(% 3)"),
 			gen.NewTypeMapping[pkg0.MyData5]("numeric"),
 			gen.NewTypeMapping[int64]("double precision"),
 			gen.NewTypeMapping[string]("time(6) with time zone"),

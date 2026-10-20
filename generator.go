@@ -330,12 +330,13 @@ func (t columnTypeInfo) match(columnType string) bool {
 		if t.dataType != t2.dataType {
 			continue
 		}
-		if t.param1 != "#" && t.param1 != t2.param1 {
+		if t.param1 != "%" && t.param1 != t2.param1 {
 			continue
 		}
-		if t.param2 != "#" && t.param2 != t2.param2 {
+		if t.param2 != "%" && t.param2 != t2.param2 {
 			var lenientMatch bool
-			if t.param2 == "" {
+			switch t.param2 {
+			case "":
 				if t2.param2 == "0" || t2.param2 == "byte" || t2.param2 == "char" {
 					// 兼容第二个参数可忽略匹配的场景，例如t2为：
 					// decimal(10,0)
@@ -343,10 +344,14 @@ func (t columnTypeInfo) match(columnType string) bool {
 					// char(10 byte)
 					lenientMatch = true
 				}
-			} else if t.param2 == "0" {
+			case "0":
 				if t2.param2 == "" {
 					// 兼容第二个参数可忽略匹配的场景，例如t2为：
 					// decimal(10)
+					lenientMatch = true
+				}
+			case "_":
+				if i, err := strconv.ParseInt(t2.param2, 10, 64); err == nil && i > 0 {
 					lenientMatch = true
 				}
 			}
@@ -384,8 +389,8 @@ func parseColumnType(ct string) columnTypeInfo {
 		}
 	}
 	if param1 == "" && param2 == "" {
-		param1 = "#"
-		param2 = "#"
+		param1 = "%"
+		param2 = "%"
 	}
 	return columnTypeInfo{dataType, param1, param2}
 }
