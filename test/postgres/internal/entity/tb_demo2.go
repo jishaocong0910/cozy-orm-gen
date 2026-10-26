@@ -1,0 +1,25 @@
+package entity
+
+import (
+	"github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg"
+	pkg2 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg"
+	pkg3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg2"
+	pkg_2 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg3"
+	pkg_3 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg4"
+	pkg0 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg5"
+	pkg1 "github.com/jishaocong0910/cozy-orm-gen/test/postgres/internal/pkg/pkg6"
+)
+
+type TbDemo2 struct {
+	_     struct{}       `orm:"table=tb_demo2"`
+	Col1  *pkg.MyData    `orm:"column=col1"`
+	Col2  pkg2.MyData1   `orm:"column=col2"`
+	Col3  pkg3.MyData2   `orm:"column=col3"`
+	Col4  *pkg_2.MyData3 `orm:"column=col4"`
+	Col5  *pkg_3.MyData4 `orm:"column=col5"`
+	Col6  pkg_3.MyData4  `orm:"column=col6"`
+	Col7  *pkg0.MyData5  `orm:"column=col7"`
+	Col8  *int64         `orm:"column=col8"`
+	Col9  *string        `orm:"column=col9"`
+	Col10 *pkg1.MyData6  `orm:"column=col10"`
+}

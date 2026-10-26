@@ -1,0 +1,69 @@
+package entity
+
+import "time"
+
+// TbDemo table comment
+type TbDemo struct {
+	_ struct{} `orm:"table=TB_DEMO"`
+	// INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+	Id *int64 `orm:"column=id;pk;auto"`
+	// ROWID
+	Rowid *string `orm:"column=rowid"`
+	// UROWID
+	Urowid *string `orm:"column=urowid"`
+	// CHAR(10)
+	Char *string `orm:"column=char"`
+	// CHAR(1 BYTE)
+	Char2 *string `orm:"column=char_2"`
+	// CHAR(1 CHAR)
+	Char3 *string `orm:"column=char_3"`
+	// VARCHAR2(10) DEFAULT 'a' NOT NULL
+	Varchar2 *string `orm:"column=varchar2"`
+	// VARCHAR2(1 BYTE) DEFAULT 'A'
+	Varchar22 *string `orm:"column=varchar2_2"`
+	// VARCHAR2(1 CHAR) NOT NULL
+	Varchar23 *string `orm:"column=varchar2_3"`
+	// VARCHAR(10)
+	Varchar1 *string `orm:"column=varchar1"`
+	// VARCHAR(1 BYTE)
+	Varchar12 *string `orm:"column=varchar1_2"`
+	// VARCHAR(2 CHAR)
+	Varchar13 *string `orm:"column=varchar1_3"`
+	// CLOB
+	Clob *string `orm:"column=clob"`
+	// NCLOB
+	Nclob *string `orm:"column=nclob"`
+	// NCHAR(10)
+	Nchar *string `orm:"column=nchar"`
+	// NVARCHAR2(10)
+	Nvarchar2 *string `orm:"column=nvarchar2"`
+	// NUMBER(10)
+	Number *int64 `orm:"column=number"`
+	// NUMBER(1)
+	Number2 *bool `orm:"column=number_2"`
+	// NUMBER(10, 4)
+	Number3 *float64 `orm:"column=number_3"`
+	// NUMBER
+	Number4 *float64 `orm:"column=number_4"`
+	// FLOAT
+	Float *float64 `orm:"column=float"`
+	Real  *float64 `orm:"column=real"`
+	// BINARY_FLOAT
+	BinaryFloat *float32 `orm:"column=binary_float"`
+	// BINARY_DOUBLE
+	BinaryDouble *float64 `orm:"column=binary_double"`
+	// DATE
+	Date *time.Time `orm:"column=date"`
+	// TIMESTAMP
+	Timestamp *time.Time `orm:"column=timestamp"`
+	// TIMESTAMP WITH TIME ZONE
+	TimestampWithTimeZone *time.Time `orm:"column=timestamp_with_time_zone"`
+	// TIMESTAMP WITH LOCAL TIME ZONE
+	TimestampWithLocalTimeZone *time.Time `orm:"column=timestamp_with_local_time_zone"`
+	// BLOB
+	Blob []byte `orm:"column=blob"`
+	// RAW(10)
+	Raw []byte `orm:"column=raw"`
+	// LONG RAW
+	LongRaw []byte `orm:"column=long_raw"`
+}

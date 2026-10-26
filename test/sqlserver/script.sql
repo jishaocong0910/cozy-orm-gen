@@ -1,0 +1,74 @@
+CREATE SEQUENCE my_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE tb_demo
+(
+    id               bigint IDENTITY(1,1) PRIMARY KEY,
+    id2              bigint DEFAULT (NEXT VALUE FOR my_seq),
+    tinyint          tinyint           DEFAULT 1,
+    smallint         smallint NOT NULL DEFAULT 1,
+    bigint           bigint,
+    bit              bit      NOT NULL,
+    decimal          decimal(10,2),
+    numeric          numeric(10,2),
+    money            money,
+    smallmoney       smallmoney,
+    float            float,
+    real             real,
+    date             date,
+    time             time,
+    datetime2        datetime2,
+    datetimeoffset   datetimeoffset,
+    datetime         datetime,
+    smalldatetime    smalldatetime,
+    char             char(10),
+    varchar          varchar(10),
+    varchar_max      varchar(max),
+    text             text,
+    nchar            nchar(10),
+    nvarchar         nvarchar(10),
+    nvarchar_max     nvarchar(max),
+    ntext            ntext,
+    binary           binary(10),
+    varbinary        varbinary(10),
+    varbinary_max    varbinary(max),
+    image            image,
+    geography        geography,
+    geometry         geometry,
+    hierarchyid      hierarchyid,
+    uniqueidentifier uniqueidentifier,
+    xml              xml,
+    rowversion       rowversion
+);
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'table comment', @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bigint IDENTITY(1,1)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'id';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bigint DEFAULT (NEXT VALUE FOR MySequence)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'id2';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'tinyint DEFAULT 1' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'tinyint';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'smallint NOT NULL DEFAULT 1' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'smallint';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'bit NOT NULL' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'bit';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'decimal' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'decimal';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'numeric' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'numeric';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'money' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'money';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'smallmoney' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'smallmoney';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'float' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'float';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'real' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'real';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'date' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'date';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'time' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'time';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'datetime2' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'datetime2';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'datetimeoffset' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'datetimeoffset';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'datetime' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'datetime';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'smalldatetime' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'smalldatetime';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'char(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'char';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'varchar(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'varchar';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'text' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'text';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'nchar(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'nchar';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'nvarchar(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'nvarchar';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'ntext' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'ntext';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'binary(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'binary';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'varbinary(10)' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'varbinary';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'image' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'image';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'geography' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'geography';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'geometry' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'geometry';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'hierarchyid' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'hierarchyid';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'uniqueidentifier' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'uniqueidentifier';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'xml' , @level0type=N'SCHEMA', @level0name=N'dbo', @level1type=N'TABLE', @level1name=N'tb_demo', @level2type=N'COLUMN', @level2name=N'xml';

@@ -1,0 +1,95 @@
+package entity
+
+import "time"
+
+// TbDemoEntity table comment
+type TbDemoEntity struct {
+	// bigint primary key auto_increment
+	BigintPk *int64 `orm:"pk;auto"`
+	// bit(1)
+	Bit1 []uint8
+	// bit(8)
+	Bit8 []uint8
+	// tinyint
+	Tinyint *int8
+	// tinyint unsigned
+	TinyintUnsigned *uint8
+	// tinyint(1)
+	Tinyint1 *bool
+	// smallint
+	Smallint *int16
+	// smallint unsigned
+	SmallintUnsigned *uint16
+	// mediumint
+	Mediumint *int32
+	// mediumint unsigned
+	MediumintUnsigned *uint32
+	// int
+	Int *int32
+	// int unsigned
+	IntUnsigned *uint32
+	// bigint
+	Bigint *int64
+	// bigint unsigned
+	BigintUnsigned *uint64
+	// double
+	Double *float64
+	// decimal
+	Decimal *float64
+	// varchar(255)
+	Varchar *string
+	// char
+	Char *string
+	// text
+	Text *string
+	// tinytext
+	Tinytext *string
+	// mediumtext
+	Mediumtext *string
+	// longtext
+	Longtext *string
+	// enum('a','b','c')
+	Enum *string
+	// json
+	Json *string
+	// set('a','b','c')
+	Set *string
+	// date
+	Date *time.Time
+	// datetime(3)
+	Datetime *time.Time
+	// timestamp
+	Timestamp *time.Time
+	// time
+	Time *string
+	// year
+	Year *int64
+	// binary(5)
+	Binary []byte
+	// varbinary(255)
+	Varbinary []byte
+	// blob
+	Blob []byte
+	// tinyblob
+	Tinyblob []byte
+	// mediumblob
+	Mediumblob []byte
+	// longblob
+	Longblob []byte
+	// numeric
+	Numeric *float64
+	// integer
+	Integer *int32
+	// float
+	Float *float32
+	// real
+	Real *float64
+	// boolean
+	Boolean *bool
+	// geometry
+	// cozy-orm cannot solve this type!
+	Geometry any `orm:"ignore"`
+	// point
+	// cozy-orm cannot solve this type!
+	Point any `orm:"ignore"`
+}
