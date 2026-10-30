@@ -273,7 +273,7 @@ func (g *generator) genEntity() {
 		if err == nil {
 			logger.info("create entity of table \"%s\" success", e.Table)
 		} else { // coverage-ignore
-			logger.error("create entity of table \"%s\" fail, error: %+v", e.Table, err)
+			logger.error("create entity of table \"%s\" fail; error: %+v", e.Table, err)
 		}
 	}
 }
@@ -412,7 +412,7 @@ type fieldTmplParam struct {
 	IsPk              bool
 	IsAutoIncrement   bool
 	IsNotNull         bool
-	IsHasDefault      bool
+	HasDefault        bool
 	AutoIncrementStep int
 	Comment           string
 	IsValid           bool

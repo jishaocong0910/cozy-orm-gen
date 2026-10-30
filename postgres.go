@@ -68,7 +68,7 @@ order by
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
-		isHasDefault := false
+		hasDefault := false
 		isAutoIncrement := false
 
 		var (
@@ -100,7 +100,7 @@ order by
 			if di.defaultNextvalRegex.MatchString(strings.ToLower(*columnDefault)) {
 				isAutoIncrement = true
 			} else {
-				isHasDefault = true
+				hasDefault = true
 			}
 		}
 
@@ -205,7 +205,7 @@ order by
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
+			HasDefault:      hasDefault,
 			Comment:         *description,
 			IsValid:         fieldType != "any",
 		}

@@ -91,13 +91,13 @@ ORDER BY c.column_id`, table, di.schema)
 			scale          int
 			charLength     int
 			isNotNull      bool
-			isHasDefault   bool
+			hasDefault     bool
 			isPk           bool
 			isSeq          bool
 			incrementValue int
 			comment        *string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &isSeq, &incrementValue, &comment)
+		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &hasDefault, &isPk, &isSeq, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -189,7 +189,7 @@ ORDER BY c.column_id`, table, di.schema)
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
+			HasDefault:      hasDefault,
 			Comment:         *comment,
 			IsValid:         fieldType != "any",
 		}

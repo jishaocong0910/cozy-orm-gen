@@ -41,7 +41,7 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 		exists = true
 		fieldType := "any"
 		isAutoIncrement := false
-		isHasDefault := false
+		hasDefault := false
 		var columnType string
 
 		var (
@@ -63,7 +63,7 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 			pkCount++
 		}
 		if dfltValue != nil {
-			isHasDefault = true
+			hasDefault = true
 		}
 		if strings.HasPrefix(dataType, "DECIMAL") {
 			dataType = "DECIMAL"
@@ -100,7 +100,7 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 			IsPk:            isPk == 1,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
+			HasDefault:      hasDefault,
 			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)

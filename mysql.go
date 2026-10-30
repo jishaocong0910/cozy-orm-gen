@@ -63,10 +63,10 @@ ORDER BY ORDINAL_POSITION`,
 			isPk            bool
 			isAutoIncrement bool
 			isNotNull       bool
-			isHasDefault    bool
+			hasDefault      bool
 			comment         string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &isPk, &isAutoIncrement, &isNotNull, &isHasDefault, &comment)
+		err := rows.Scan(&column, &dataType, &columnType, &isPk, &isAutoIncrement, &isNotNull, &hasDefault, &comment)
 		if err != nil { // coverage-ignore
 			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
@@ -145,7 +145,7 @@ ORDER BY ORDINAL_POSITION`,
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
+			HasDefault:      hasDefault,
 			Comment:         comment,
 			IsValid:         fieldType != "any",
 		}
