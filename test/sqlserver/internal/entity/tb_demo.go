@@ -9,6 +9,8 @@ type TbDemo struct {
 	Id *int64 `orm:"column=id;pk;auto"`
 	// bigint DEFAULT (NEXT VALUE FOR MySequence)
 	Id2 *int64 `orm:"column=id2;auto"`
+	// int
+	Int *int32 `orm:"column=int"`
 	// tinyint DEFAULT 1
 	Tinyint *uint `orm:"column=tinyint"`
 	// smallint NOT NULL DEFAULT 1

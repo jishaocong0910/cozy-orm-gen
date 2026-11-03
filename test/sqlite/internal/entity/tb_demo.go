@@ -4,8 +4,8 @@ import "time"
 
 type TbDemo struct {
 	_                struct{}   `orm:"table=tb_demo"`
-	Id               *int32     `orm:"column=id;pk;auto"`
-	Int              *int32     `orm:"column=int"`
+	Id               *int64     `orm:"column=id;pk;auto"`
+	Int              *int64     `orm:"column=int"`
 	Tinyint          *int8      `orm:"column=tinyint"`
 	Smallint         *int16     `orm:"column=smallint"`
 	Mediumint        *int32     `orm:"column=mediumint"`

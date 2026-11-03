@@ -1,6 +1,8 @@
 CREATE TABLE demo
 (
-    `bigint_pk`          bigint primary key auto_increment comment 'bigint primary key auto_increment',
+    `bigint_pk`          bigint primary key auto_increment comment 'bigint
+primary key
+auto_increment',
     `bit1`               bit(1) comment 'bit(1)',
     `bit8`               bit(8) comment 'bit(8)',
     `tinyint`            tinyint NOT NULL DEFAULT 1 comment 'tinyint',
@@ -44,4 +46,5 @@ CREATE TABLE demo
     `geometry`           geometry comment 'geometry',
     `point`              point comment 'point',
     `unused`             int
-) comment 'table comment';
+) comment 'this is
+a table comment';

@@ -41,6 +41,10 @@ func TestSqlite(t *testing.T) {
 	err = db.Ping()
 	r.NoError(err)
 
+	t.Cleanup(func() {
+		os.RemoveAll("gen/sqlite.db")
+	})
+
 	_, err = db.Exec(`CREATE TABLE tb_demo
 -- table comment
 (
@@ -78,10 +82,11 @@ func TestSqlite(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DB:       db,
-		DBType:   orm.DBType_.SQLite,
-		FilePath: "gen/entity",
-		Tables:   []string{"tb_demo"},
+		DB:        db,
+		DBType:    orm.DBType_.SQLite,
+		FilePath:  "gen/entity",
+		CoverFile: true,
+		Tables:    []string{"tb_demo"},
 		TypeMappings: gen.TypeMappings{
 			gen.NewTypeMapping[int64]("decimal(8,0)"),
 		},
@@ -93,9 +98,9 @@ func TestSqlite(t *testing.T) {
 
 	compareFile(r, "internal/entity/tb_demo.go", "gen/entity/tb_demo.go")
 
-	testTime := time.UnixMilli(1783676738000)
+	testTime := time.UnixMilli(1783676738000).UTC()
 	e := &entity.TbDemo{
-		Int:              new(int32(1)),
+		Int:              new(int64(1)),
 		Tinyint:          new(int8(1)),
 		Smallint:         new(int16(1)),
 		Mediumint:        new(int32(1)),
@@ -125,10 +130,8 @@ func TestSqlite(t *testing.T) {
 	d := orm.Config{RawDB: db, DBType: orm.DBType_.SQLite}.Build()
 	_, err = d.Insert[entity.TbDemo](nil).Must().Entities(e).Do()
 	r.NoError(err)
-	t.Cleanup(func() {
-		os.RemoveAll("gen")
-	})
 	e2, err := d.FindOne[entity.TbDemo](nil).Must().Do()
+	r.NoError(err)
 	r.Equal(e, e2)
 }
 

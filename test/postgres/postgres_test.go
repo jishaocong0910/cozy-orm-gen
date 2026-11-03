@@ -69,10 +69,11 @@ func TestPostgres(t *testing.T) {
 	r.NoError(err)
 
 	gen.Config{
-		DB:       db,
-		DBType:   orm.DBType_.PostgreSQL,
-		FilePath: "gen/entity",
-		Tables:   []string{"tb_demo"},
+		DB:        db,
+		DBType:    orm.DBType_.PostgreSQL,
+		FilePath:  "gen/entity",
+		CoverFile: true,
+		Tables:    []string{"tb_demo"},
 	}.Gen()
 
 	t.Cleanup(func() {
@@ -177,9 +178,10 @@ func TestTypeMapping(t *testing.T) {
 
 	r.PanicsWithValue(`invalid field type "complex128"`, func() {
 		gen.Config{
-			DB:       db,
-			DBType:   orm.DBType_.PostgreSQL,
-			FilePath: "gen/entity",
+			DB:        db,
+			DBType:    orm.DBType_.PostgreSQL,
+			FilePath:  "gen/entity",
+			CoverFile: true,
 			TypeMappings: gen.TypeMappings{
 				gen.NewTypeMapping[complex128]("int"),
 			},

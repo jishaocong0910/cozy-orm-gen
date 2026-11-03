@@ -28,12 +28,12 @@ type oracleInfo struct {
 	defaultNextvalRegex *regexp.Regexp
 }
 
-func (di oracleInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+func (di oracleInfo) getTableInfo(table string) (string, []string, []fieldTmplParam, error) {
 	table = strings.ToUpper(table)
 	var (
 		exists       bool
+		tableComment sql.NullString
 		fields       []fieldTmplParam
-		tableComment string
 	)
 
 	rows, err := di.db.Query(`SELECT
@@ -43,64 +43,66 @@ func (di oracleInfo) getTableInfo(table string) (string, []fieldTmplParam, strin
     t.data_precision,
     t.data_scale,
     t.char_length,
-    t.char_used = 'B',
     t.data_length,
-    t.nullable = 'N',
-    t.data_default IS NOT NULL,
-    EXISTS (
-		SELECT 1
-		FROM user_cons_columns cc
-			 JOIN user_constraints c ON c.constraint_name = cc.constraint_name 
-			 				   		AND c.table_name = cc.table_name 
-		WHERE cc.table_name = t.table_name
-		  AND cc.column_name = t.column_name
-		  AND c.constraint_type = 'P'
-	) AS is_pk,
-    t.identity_column = 'YES',
-    t2.comments
+    CASE WHEN t.char_used = 'B' THEN 1 ELSE 0 END AS is_byte,
+    CASE WHEN t.nullable = 'N' THEN 1 ELSE 0 END AS is_not_null,
+    CASE WHEN t.data_default IS NOT NULL THEN 1 ELSE 0 END AS has_default,
+    CASE WHEN EXISTS (
+        SELECT 1
+        FROM user_cons_columns cc
+             JOIN user_constraints c ON c.constraint_name = cc.constraint_name
+                                    AND c.table_name = cc.table_name
+        WHERE cc.table_name = t.table_name
+          AND cc.column_name = t.column_name
+          AND c.constraint_type = 'P'
+    ) THEN 1 ELSE 0 END AS is_pk,
+    t4.increment_by AS identity_increment,
+    NVL(t2.comments, '') comments
 FROM user_tab_columns t
 	 LEFT JOIN user_col_comments t2 ON t.table_name = t2.table_name
-	       					  	   AND t.COLUMN_NAME = t2.COLUMN_NAME 
+	       					  	   AND t.COLUMN_NAME = t2.COLUMN_NAME
+     LEFT JOIN user_tab_identity_cols t3 ON t.table_name = t3.table_name
+                                        AND t.column_name = t3.column_name
+	 LEFT JOIN user_sequences t4 ON t3.sequence_name = t4.sequence_name
 WHERE t.table_name = :1
 ORDER BY t.column_id`, strings.ToUpper(table))
 	if err != nil { // coverage-ignore
-		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
 		isAutoIncrement := false
+		autoIncrementStep := 0
 
 		var (
-			column       string
-			dataType     string
-			columnType   string
-			precision    *int
-			scale        *int
-			charLength   int
-			charUseByte  *bool
-			dataLength   int
-			isNotNull    bool
-			isHasDefault bool
-			isPk         bool
-			isIdentity   bool
-			comment      *string
+			column            string
+			dataType          string
+			columnType        string
+			precision         *int
+			scale             *int
+			charLength        int
+			dataLength        int
+			charUseByte       *bool
+			isNotNull         bool
+			hasDefault        bool
+			isPk              bool
+			identityIncrement *int
+			comment           sql.NullString
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &charUseByte, &dataLength, &isNotNull, &isHasDefault, &isPk, &isIdentity, &comment)
+		err = rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &dataLength, &charUseByte, &isNotNull, &hasDefault, &isPk, &identityIncrement, &comment)
 		if err != nil { // coverage-ignore
-			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
 		dataType = strings.ToUpper(dataType)
 		if strings.HasPrefix(dataType, "TIMESTAMP") {
 			dataType = "TIMESTAMP"
 		}
-		if isIdentity {
+		if identityIncrement != nil {
 			isAutoIncrement = true
-		}
-		if comment == nil {
-			comment = new("")
+			autoIncrementStep = *identityIncrement
 		}
 
 		switch dataType {
@@ -191,20 +193,24 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 		}
 
 		f := fieldTmplParam{
-			Column:          column,
-			ColumnType:      columnType,
-			FieldName:       fieldNameMapper.Convert(column),
-			FieldType:       fieldType,
-			IsPk:            isPk,
-			IsAutoIncrement: isAutoIncrement,
-			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
-			Comment:         *comment,
-			IsValid:         fieldType != "any",
+			Column:            column,
+			ColumnType:        columnType,
+			FieldName:         fieldNameMapper.Convert(column),
+			FieldType:         fieldType,
+			IsPk:              isPk,
+			IsAutoIncrement:   isAutoIncrement,
+			AutoIncrementStep: autoIncrementStep,
+			IsNotNull:         isNotNull,
+			HasDefault:        hasDefault,
+			Comments:          strings.Split(comment.String, "\n"),
+			IsValid:           fieldType != "any",
 		}
 		fields = append(fields, f)
 	}
 	rows.Close()
+	if err = rows.Err(); err != nil { // coverage-ignore
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+	}
 
 	rows, err = di.db.Query("SELECT comments FROM user_tab_comments WHERE table_name = :1", strings.ToUpper(table))
 	if err != nil { // coverage-ignore
@@ -217,9 +223,9 @@ ORDER BY t.column_id`, strings.ToUpper(table))
 	}
 
 	if !exists { // coverage-ignore
-		return table, nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, nil, errors.New("\"" + table + "\" is not exists")
 	}
-	return table, fields, tableComment, nil
+	return table, strings.Split(tableComment.String, "\n"), fields, nil
 }
 
 func newOracleDbInfo(db *sql.DB) oracleInfo {

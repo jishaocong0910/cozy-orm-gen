@@ -27,11 +27,11 @@ type mySqlGenerator struct {
 	database string
 }
 
-func (di mySqlGenerator) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+func (di mySqlGenerator) getTableInfo(table string) (string, []string, []fieldTmplParam, error) {
 	var (
 		exists       bool
-		fields       []fieldTmplParam
 		tableComment string
+		fields       []fieldTmplParam
 	)
 
 	rows, err := di.db.Query(`SELECT
@@ -49,7 +49,7 @@ WHERE TABLE_SCHEMA = ?
 ORDER BY ORDINAL_POSITION`,
 		di.database, table)
 	if err != nil { // coverage-ignore
-		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -63,12 +63,12 @@ ORDER BY ORDINAL_POSITION`,
 			isPk            bool
 			isAutoIncrement bool
 			isNotNull       bool
-			isHasDefault    bool
+			hasDefault      bool
 			comment         string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &isPk, &isAutoIncrement, &isNotNull, &isHasDefault, &comment)
+		err = rows.Scan(&column, &dataType, &columnType, &isPk, &isAutoIncrement, &isNotNull, &hasDefault, &comment)
 		if err != nil { // coverage-ignore
-			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
 		dataType = strings.ToLower(dataType)
@@ -145,13 +145,16 @@ ORDER BY ORDINAL_POSITION`,
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
-			Comment:         comment,
+			HasDefault:      hasDefault,
+			Comments:        strings.Split(comment, "\n"),
 			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)
 	}
 	rows.Close()
+	if err = rows.Err(); err != nil { // coverage-ignore
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+	}
 
 	rows, err = di.db.Query("SELECT TABLE_COMMENT FROM information_schema.tables WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?", di.database, table)
 	if err != nil { // coverage-ignore
@@ -164,9 +167,9 @@ ORDER BY ORDINAL_POSITION`,
 	}
 
 	if !exists { // coverage-ignore
-		return table, nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, nil, errors.New("\"" + table + "\" is not exists")
 	}
-	return table, fields, tableComment, nil
+	return table, strings.Split(tableComment, "\n"), fields, nil
 }
 
 func newMySqlDbInfo(db *sql.DB) mySqlGenerator {

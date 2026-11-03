@@ -2,9 +2,12 @@ package entity
 
 import "time"
 
-// TbDemoEntity table comment
+// TbDemoEntity this is
+// a table comment
 type TbDemoEntity struct {
-	// bigint primary key auto_increment
+	// bigint
+	// primary key
+	// auto_increment
 	BigintPk *int64 `orm:"pk;auto"`
 	// bit(1)
 	Bit1 []uint8

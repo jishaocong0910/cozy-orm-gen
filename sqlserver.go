@@ -27,7 +27,7 @@ type sqlServerDbInfo struct {
 	schema string
 }
 
-func (di sqlServerDbInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+func (di sqlServerDbInfo) getTableInfo(table string) (string, []string, []fieldTmplParam, error) {
 	var (
 		exists       bool
 		fields       []fieldTmplParam
@@ -46,36 +46,37 @@ func (di sqlServerDbInfo) getTableInfo(table string) (string, []fieldTmplParam, 
 		WHEN c.default_object_id > 0 THEN 1 
 		ELSE 0 
 	END has_default,
-	CASE
-		WHEN i.is_primary_key = 1 THEN 1
-		ELSE 0
-	END is_pk,
+	CASE WHEN EXISTS (
+        SELECT 1
+        FROM sys.index_columns ic
+        JOIN sys.indexes i
+          ON i.object_id = ic.object_id
+         AND i.index_id = ic.index_id
+        WHERE ic.object_id = c.object_id
+          AND ic.column_id = c.column_id
+          AND i.is_primary_key = 1
+    ) THEN 1 ELSE 0 END is_pk,
 	CASE 
 		WHEN dc.definition LIKE '%NEXT VALUE FOR%' THEN 1 
 		ELSE 0 
 	END is_seq,
-	ISNULL(idc.increment_value, 0),
-	ep.value comment
+	ISNULL(idc.increment_value, 0) increment_value,
+	ISNULL(ep.value, '') comment
 FROM sys.tables tb
 	 INNER JOIN sys.columns c ON tb.object_id = c.object_id
 	 INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
 	 LEFT JOIN sys.identity_columns idc ON idc.object_id = c.object_id
 									   AND idc.column_id = c.column_id
-	 LEFT JOIN sys.index_columns ic ON ic.object_id = c.object_id
-								   AND ic.column_id = c.column_id
-	 LEFT JOIN sys.indexes i ON i.object_id = ic.object_id
-							AND i.index_id = ic.index_id
-							AND i.is_primary_key = 1
 	 LEFT JOIN sys.extended_properties ep ON ep.major_id = c.object_id
 										 AND ep.minor_id = c.column_id
 										 AND ep.name = 'MS_Description'
 	 LEFT JOIN sys.default_constraints dc ON dc.parent_object_id = c.object_id 
 										 AND dc.parent_column_id = c.column_id
-WHERE tb.name = :1
-  AND SCHEMA_NAME(tb.schema_id) = :2
-ORDER BY c.column_id`, table, di.schema)
+WHERE SCHEMA_NAME(tb.schema_id) = :1
+  AND tb.name = :2
+ORDER BY c.column_id`, di.schema, table)
 	if err != nil { // coverage-ignore
-		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
@@ -91,23 +92,20 @@ ORDER BY c.column_id`, table, di.schema)
 			scale          int
 			charLength     int
 			isNotNull      bool
-			isHasDefault   bool
+			hasDefault     bool
 			isPk           bool
 			isSeq          bool
 			incrementValue int
-			comment        *string
+			comment        string
 		)
-		err := rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &isHasDefault, &isPk, &isSeq, &incrementValue, &comment)
+		err = rows.Scan(&column, &dataType, &columnType, &precision, &scale, &charLength, &isNotNull, &hasDefault, &isPk, &isSeq, &incrementValue, &comment)
 		if err != nil { // coverage-ignore
-			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 		dataType = strings.ToLower(dataType)
 
-		if isSeq || incrementValue > 0 {
+		if isSeq || incrementValue != 0 {
 			isAutoIncrement = true
-		}
-		if comment == nil {
-			comment = new("")
 		}
 
 		switch dataType {
@@ -189,15 +187,26 @@ ORDER BY c.column_id`, table, di.schema)
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
-			Comment:         *comment,
+			HasDefault:      hasDefault,
+			Comments:        strings.Split(comment, "\n"),
 			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)
 	}
 	rows.Close()
+	if err = rows.Err(); err != nil { // coverage-ignore
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+	}
 
-	rows, err = di.db.Query("SELECT value FROM sys.extended_properties WHERE major_id = object_id (:1) AND minor_id = 0", table)
+	rows, err = di.db.Query(`SELECT ep.value
+FROM sys.tables tb
+JOIN sys.schemas s ON s.schema_id = tb.schema_id
+JOIN sys.extended_properties ep
+  ON ep.major_id = tb.object_id
+ AND ep.minor_id = 0
+ AND ep.name = 'MS_Description'
+WHERE s.name = :1
+  AND tb.name = :2`, di.schema, table)
 	if err != nil { // coverage-ignore
 		logger.error("query comment of table \"%s\" failed: %v", table, err)
 	} else {
@@ -208,9 +217,9 @@ ORDER BY c.column_id`, table, di.schema)
 	}
 
 	if !exists { // coverage-ignore
-		return table, nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, nil, errors.New("\"" + table + "\" is not exists")
 	}
-	return table, fields, tableComment, nil
+	return table, strings.Split(tableComment, "\n"), fields, nil
 }
 
 func newSqlServerDbInfo(db *sql.DB) sqlServerDbInfo {
