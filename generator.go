@@ -116,7 +116,7 @@ func (c Config) getEntityNameMapper() *orm.NameMapper {
 }
 
 func (c Config) getDbInfo() dbInfo {
-	if c.DB == nil {
+	if c.DB == nil { // coverage-ignore
 		panic("DB must not be nil")
 	}
 	switch c.DBType.String() {
@@ -157,7 +157,7 @@ func (g *generator) Gen() {
 
 func (g *generator) prepareTmplParams() {
 	for _, item := range g.tables {
-		table, fields, comment, err := g.dbInfo.getTableInfo(item)
+		table, comments, fields, err := g.dbInfo.getTableInfo(item)
 		if err != nil { // coverage-ignore
 			logger.error(err.Error())
 			continue
@@ -168,7 +168,7 @@ func (g *generator) prepareTmplParams() {
 			Table:       table,
 			EntityName:  g.entityNameMapper.Convert(table),
 			Fields:      fields,
-			Comment:     comment,
+			Comments:    comments,
 			Imports:     imps,
 			OmitNameTag: g.omitNameTag,
 		}
@@ -270,10 +270,10 @@ func (g *generator) determinePkgName(pkgPath, pkgName string, pkgNameToPaths map
 func (g *generator) genEntity() {
 	for _, e := range g.entityTmplParams {
 		err := g.createFile(g.outPath, entityFileNameMapper.Convert(e.EntityName), g.coverFile, entityTmpl, e)
-		if err == nil {
+		if err != nil { // coverage-ignore
+			logger.error("create entity of table \"%s\" fail; error: %+v", e.Table, err)
+		} else {
 			logger.info("create entity of table \"%s\" success", e.Table)
-		} else { // coverage-ignore
-			logger.error("create entity of table \"%s\" fail, error: %+v", e.Table, err)
 		}
 	}
 }
@@ -309,7 +309,7 @@ func NewTypeMapping[T any](columnType string) typeMapping {
 }
 
 type dbInfo interface {
-	getTableInfo(table string) (string, []fieldTmplParam, string, error)
+	getTableInfo(string) (table string, comments []string, params []fieldTmplParam, err error)
 }
 
 type typeMapping struct {
@@ -399,7 +399,7 @@ type entityTmplParam struct {
 	Table       string
 	EntityName  string
 	Fields      []fieldTmplParam
-	Comment     string
+	Comments    []string
 	Imports     []string
 	OmitNameTag bool
 }
@@ -412,14 +412,14 @@ type fieldTmplParam struct {
 	IsPk              bool
 	IsAutoIncrement   bool
 	IsNotNull         bool
-	IsHasDefault      bool
+	HasDefault        bool
 	AutoIncrementStep int
-	Comment           string
+	Comments          []string
 	IsValid           bool
 }
 
 //go:linkname isValidFieldType github.com/jishaocong0910/cozy-orm/orm.isValidFieldType
-func isValidFieldType(reflect.Type) bool
+func isValidFieldType(reflect.Type) bool // coverage-ignore
 
 var (
 	//go:embed entity.tmpl

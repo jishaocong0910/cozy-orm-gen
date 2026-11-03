@@ -25,8 +25,22 @@ import (
 )
 {{- end}}
 
-{{- if ne .Comment "" }}
-// {{.EntityName}} {{.Comment}}
+{{- if gt (len .Comments) 0}}
+	{{- $first := true -}}
+	{{- range $index, $comment := .Comments}}
+		{{- if eq $comment ""}}
+			{{- if not $first}}
+// {{$comment}}
+			{{- end}}
+		{{- else}}
+			{{- if $first}}
+			{{- $first = false}}
+// {{$.EntityName}} {{$comment}}
+			{{- else}}
+// {{$comment}}
+			{{- end}}
+		{{- end}}
+	{{- end}}
 {{- end}}
 type {{.EntityName}} struct {
 {{- if not .OmitNameTag}}
@@ -34,8 +48,12 @@ type {{.EntityName}} struct {
 {{- end}}
 {{- range .Fields}}
 	{{- $hasOrmTag := false -}}
-	{{- if ne .Comment ""}}
-	// {{.Comment}}
+	{{- if gt (len .Comments) 0}}
+		{{- range $comment := .Comments}}
+			{{- if ne $comment ""}}
+	// {{$comment}}
+			{{- end}}
+		{{- end}}
 	{{- end}}
 	{{- if not .IsValid}}
 	// cozy-orm cannot solve this type!

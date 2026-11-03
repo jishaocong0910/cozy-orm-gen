@@ -29,46 +29,49 @@ type postgresInfo struct {
 	defaultNextvalRegex *regexp.Regexp
 }
 
-func (di postgresInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+func (di postgresInfo) getTableInfo(table string) (string, []string, []fieldTmplParam, error) {
 	var (
 		exists       bool
-		fields       []fieldTmplParam
 		tableComment string
+		fields       []fieldTmplParam
 	)
 
-	rows, err := di.db.Query(`select
+	rows, err := di.db.Query(`SELECT
 	a.attname,
 	t.typname,
-	format_type(a.atttypid, a.atttypmod),
+	FORMAT_TYPE(a.atttypid, a.atttypmod),
 	a.attndims,
 	a.atttypmod,
-	i.indisprimary is not null,
-	a.attidentity = 'd',
+	EXISTS (
+    	SELECT 1
+    	FROM pg_constraint pk
+    	WHERE pk.conrelid = a.attrelid
+      	  AND pk.contype = 'p'
+      	  AND a.attnum = ANY(pk.conkey)
+	) AS is_pk,
+	a.attidentity IN ('a', 'd'),
 	a.attnotnull,
-	pg_get_expr(d.adbin, d.adrelid),
-	col_description(a.attrelid, a.attnum)
-from pg_attribute a
-	 join pg_class c on a.attrelid = c.oid
-	 join pg_namespace n on c.relnamespace = n.oid
-	 join pg_type t on a.atttypid = t.oid
-	 left join pg_attrdef d on d.adrelid = a.attrelid
-	                       and d.adnum = a.attnum
-	 left join pg_index i on a.attrelid = i.indrelid
-	                	 and a.attnum = any(i.indkey)
-where n.nspname = $1
-  and c.relname = $2
-  and a.attnum > 0
-  and not a.attisdropped
-order by
+	PG_GET_EXPR(d.adbin, d.adrelid),
+	COALESCE(COL_DESCRIPTION(a.attrelid, a.attnum), '') description
+FROM pg_attribute a
+	 JOIN pg_class c ON a.attrelid = c.oid
+	 JOIN pg_namespace n ON c.relnamespace = n.oid
+	 JOIN pg_type t ON a.atttypid = t.oid
+	 LEFT JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE n.nspname = $1
+  AND c.relname = $2
+  AND a.attnum > 0
+  AND NOT a.attisdropped
+ORDER BY
 	a.attnum`, di.schema, table)
 	if err != nil { // coverage-ignore
-		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
-		isHasDefault := false
+		hasDefault := false
 		isAutoIncrement := false
 
 		var (
@@ -81,16 +84,13 @@ order by
 			isIdentity    bool
 			isNotNull     bool
 			columnDefault *string
-			description   *string
+			description   string
 		)
-		err := rows.Scan(&column, &typname, &columnType, &attndims, &atttypmod, &isPk, &isIdentity, &isNotNull, &columnDefault, &description)
+		err = rows.Scan(&column, &typname, &columnType, &attndims, &atttypmod, &isPk, &isIdentity, &isNotNull, &columnDefault, &description)
 		if err != nil { // coverage-ignore
-			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
-		if description == nil {
-			description = new("")
-		}
 		if typname[:1] == "_" {
 			typname = typname[1:]
 		}
@@ -100,7 +100,7 @@ order by
 			if di.defaultNextvalRegex.MatchString(strings.ToLower(*columnDefault)) {
 				isAutoIncrement = true
 			} else {
-				isHasDefault = true
+				hasDefault = true
 			}
 		}
 
@@ -205,26 +205,23 @@ order by
 			IsPk:            isPk,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
-			Comment:         *description,
+			HasDefault:      hasDefault,
+			Comments:        strings.Split(description, "\n"),
 			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)
 	}
 	rows.Close()
+	if err = rows.Err(); err != nil { // coverage-ignore
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+	}
 
-	rows, err = di.db.Query(`select
-	d.description
-from
-	information_schema.tables i
-join pg_class c on
-	c.relname = i.table_name
-left join pg_description d on
-	d.objoid = c.oid
-	and d.objsubid = '0'
-where
-	i.table_schema = $1
-	and i.table_name = $2`, di.schema, table)
+	rows, err = di.db.Query(`SELECT COALESCE(d.description, '')
+FROM pg_class c
+	JOIN pg_namespace n ON n.oid = c.relnamespace
+	LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0
+WHERE n.nspname = $1
+  AND c.relname = $2`, di.schema, table)
 	if err != nil { // coverage-ignore
 		logger.error("query comment of table \"%s\" failed: %v", table, err)
 	} else {
@@ -235,9 +232,9 @@ where
 	}
 
 	if !exists { // coverage-ignore
-		return table, nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, nil, errors.New("\"" + table + "\" is not exists")
 	}
-	return table, fields, tableComment, nil
+	return table, strings.Split(tableComment, "\n"), fields, nil
 }
 
 func newPostgresDbInfo(db *sql.DB) postgresInfo {

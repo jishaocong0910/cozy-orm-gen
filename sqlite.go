@@ -25,23 +25,22 @@ type sqliteDbInfo struct {
 	db *sql.DB
 }
 
-func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, string, error) {
+func (di sqliteDbInfo) getTableInfo(table string) (string, []string, []fieldTmplParam, error) {
 	var (
 		exists  bool
 		pkCount int
 		fields  []fieldTmplParam
 	)
-
-	rows, err := di.db.Query("PRAGMA table_info(" + table + ")")
+	rows, err := di.db.Query(`SELECT cid, name, type, "notnull", dflt_value, pk FROM pragma_table_info(?)`, table)
 	if err != nil { // coverage-ignore
-		return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 	}
 
 	for rows.Next() {
 		exists = true
 		fieldType := "any"
 		isAutoIncrement := false
-		isHasDefault := false
+		hasDefault := false
 		var columnType string
 
 		var (
@@ -51,22 +50,22 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 			dfltValue *any
 			isPk      int
 		)
-		err := rows.Scan(new(any), &column, &dataType, &isNotNull, &dfltValue, &isPk)
+		err = rows.Scan(new(any), &column, &dataType, &isNotNull, &dfltValue, &isPk)
 		if err != nil { // coverage-ignore
-			return table, nil, "", fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+			return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
 		}
 
 		dataType = strings.ToUpper(dataType)
 		columnType = dataType
-		if isPk != 0 {
+		if strings.HasPrefix(dataType, "DECIMAL") {
+			dataType = "DECIMAL"
+		}
+		if isPk != 0 && dataType == "INTEGER" {
 			isAutoIncrement = true
 			pkCount++
 		}
 		if dfltValue != nil {
-			isHasDefault = true
-		}
-		if strings.HasPrefix(dataType, "DECIMAL") {
-			dataType = "DECIMAL"
+			hasDefault = true
 		}
 
 		switch dataType {
@@ -74,9 +73,9 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 			fieldType = "*int8"
 		case "SMALLINT", "INT2":
 			fieldType = "*int16"
-		case "MEDIUM INT", "INTEGER", "INT", "INT4":
+		case "MEDIUM INT", "INT4":
 			fieldType = "*int32"
-		case "BIGINT":
+		case "INTEGER", "INT", "BIGINT":
 			fieldType = "*int64"
 		case "UNSIGNED BIG INT":
 			fieldType = "*uint64"
@@ -100,23 +99,26 @@ func (di sqliteDbInfo) getTableInfo(table string) (string, []fieldTmplParam, str
 			IsPk:            isPk == 1,
 			IsAutoIncrement: isAutoIncrement,
 			IsNotNull:       isNotNull,
-			IsHasDefault:    isHasDefault,
+			HasDefault:      hasDefault,
 			IsValid:         fieldType != "any",
 		}
 		fields = append(fields, f)
 	}
 	rows.Close()
+	if err = rows.Err(); err != nil { // coverage-ignore
+		return table, nil, nil, fmt.Errorf("query info of table \"%s\" failed: %v", table, err)
+	}
 
 	if pkCount > 1 { // coverage-ignore
-		for _, field := range fields {
-			field.IsAutoIncrement = false
+		for i := range fields {
+			(&fields[i]).IsAutoIncrement = false
 		}
 	}
 
 	if !exists { // coverage-ignore
-		return table, nil, "", errors.New("\"" + table + "\" is not exists")
+		return table, nil, nil, errors.New("\"" + table + "\" is not exists")
 	}
-	return table, fields, "", nil
+	return table, nil, fields, nil
 }
 
 func newSqliteDbInfo(db *sql.DB) sqliteDbInfo {
